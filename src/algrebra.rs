@@ -5,6 +5,7 @@ use std::fmt::Display;
 pub enum Expression {
     Sum(Box<Sum>),
     Product(Box<Product>),
+
     Term(String),
 }
 
@@ -33,7 +34,7 @@ impl Sum {
 
 impl Display for Sum {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} + {}", self.left, self.right)
+        write!(f, "({} + {})", self.left, self.right)
     }
 }
 
@@ -46,7 +47,7 @@ pub struct Product {
 
 impl Display for Product {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} * {}", self.left, self.right)
+        write!(f, "({} * {})", self.left, self.right)
     }
 }
 
