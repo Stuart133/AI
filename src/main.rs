@@ -4,11 +4,11 @@ mod algrebra;
 
 fn main() {
     let expr = Sum::new(
-        Expression::Term("x".to_string()),
-        Expression::Product(Box::new(Product::new(
-            Expression::Term("y".to_string()),
-            Expression::Term("z".to_string()),
-        ))),
+        Expression::term(Term::Variable("x".to_string())),
+        Expression::product(Product::new(
+            Expression::term(Term::Variable("y".to_string())),
+            Expression::term(Term::Value(10)),
+        )),
     );
 
     println!("{}", expr);
