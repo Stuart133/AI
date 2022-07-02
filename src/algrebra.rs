@@ -1,42 +1,42 @@
-use std::fmt::Display;
+use std::fmt::{Display, LowerExp};
 
 /// A mathematical expression
 #[derive(Debug)]
 pub enum Expression {
-    Sum(Box<Sum>),
-    Product(Box<Product>),
-    Group(Box<Group>),
+    Sum(Box<Expression>, Box<Expression>),
+    Product(Box<Expression>, Box<Expression>),
+    Group(Box<Expression>),
     Term(Box<Term>),
 }
 
 impl Expression {
   #[inline]
-  pub fn sum(sum: Sum) -> Expression {
-    Expression::Sum(Box::new(sum))
+  pub fn sum(left: Expression, right: Expression) -> Expression {
+    Self::Sum(Box::new(left), Box::new(right))
   }
 
   #[inline]
-  pub fn product(product: Product) -> Expression {
-    Expression::Product(Box::new(product))
+  pub fn product(left: Expression, right: Expression) -> Expression {
+    Self::Product(Box::new(left), Box::new(right))
   }
 
   #[inline]
-  pub fn group(group: Group) -> Expression {
-    Expression::Group(Box::new(group))
+  pub fn group(root: Expression) -> Expression {
+    Self::Group(Box::new(root))
   }
 
   #[inline]
   pub fn term(term: Term) -> Expression {
-    Expression::Term(Box::new(term))
+    Self::Term(Box::new(term))
   }
 }
 
 impl Display for Expression {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Expression::Sum(s) => write!(f, "{}", s),
-            Expression::Product(p) => write!(f, "{}", p),
-            Expression::Group(g) => write!(f, "{}", g),
+            Expression::Sum(l, r) => write!(f, "{} + {}", l, r),
+            Expression::Product(l, r) => write!(f, "{} * {}", l, r),
+            Expression::Group(g) => write!(f, "({})", g),
             Expression::Term(t) => write!(f, "{}", t),
         }
     }
@@ -45,84 +45,27 @@ impl Display for Expression {
 /// A base level term in a mathematical expression
 #[derive(Debug)]
 pub enum Term {
-    Variable(String),
-    Value(i64),
+  /// A variable term, composed of an integer coefficient & a label
+    Variable(i64, String),
+
+    /// A constant integer term
+    Constant(i64),
 }
 
 impl Display for Term {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Term::Variable(v) => write!(f, "{}", v),
-            Term::Value(v) => write!(f, "{}", v),
+            Term::Variable(c, v) => write!(f, "{}{}", c, v),
+            Term::Constant(v) => write!(f, "{}", v),
         }
-    }
-}
-
-/// A parenthesized group of expressions
-#[derive(Debug)]
-pub struct Group {
-  root: Expression,
-}
-
-impl Group {
-  pub fn new(root: Expression) -> Self {
-    Self { root }
-  }
-}
-
-impl Display for Group {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "({})", self.root)
-    }
-}
-
-/// A sum of two expressions
-#[derive(Debug)]
-pub struct Sum {
-    left: Expression,
-    right: Expression,
-}
-
-impl Sum {
-    pub fn new(left: Expression, right: Expression) -> Self {
-        Self { left, right }
-    }
-}
-
-impl Display for Sum {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} + {}", self.left, self.right)
-    }
-}
-
-/// A product of two expressions
-#[derive(Debug)]
-pub struct Product {
-    left: Expression,
-    right: Expression,
-}
-
-impl Display for Product {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} * {}", self.left, self.right)
-    }
-}
-
-impl Product {
-    pub fn new(left: Expression, right: Expression) -> Self {
-        Self { left, right }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{Expression, Sum, Term};
+    use super::{Expression, Term};
 
     #[test]
     fn test_sum_simplify() {
-        let expr = Sum::new(
-            Expression::Term(Box::new(Term::Variable("x".to_string()))),
-            Expression::Term(Box::new(Term::Variable("y".to_string()))),
-        );
     }
 }
