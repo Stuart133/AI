@@ -64,6 +64,12 @@ pub struct Group {
   root: Expression,
 }
 
+impl Group {
+  pub fn new(root: Expression) -> Self {
+    Self { root }
+  }
+}
+
 impl Display for Group {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "({})", self.root)
