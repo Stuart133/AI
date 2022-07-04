@@ -17,9 +17,9 @@ impl Expression {
 
     pub fn simplify(&mut self) {
         match self {
-            Expression::Sum(_) => {},
-            Expression::Product(_) => {},
-            Expression::Group(_) => {},
+            Expression::Sum(_) => {}
+            Expression::Product(_) => {}
+            Expression::Group(_) => {}
             Expression::Integer(_) => {}
             Expression::Variable(_, _) => {}
         }
@@ -28,19 +28,36 @@ impl Expression {
     /// The total number of terms in the expression
     pub fn size(&self) -> u64 {
         match self {
-            Expression::Sum(s) => {
-                s.iter().fold(0, |acc, expr| {
-                    expr.size() + acc
-                })
-            }
-            Expression::Product(p) => {
-                p.iter().fold(0, |acc, expr| {
-                    expr.size() + acc
-                })
-            }
+            Expression::Sum(s) => s.iter().fold(0, |acc, expr| expr.size() + acc),
+            Expression::Product(p) => p.iter().fold(0, |acc, expr| expr.size() + acc),
             Expression::Group(g) => g.size(),
             Expression::Integer(_) => 1,
             Expression::Variable(_, _) => 1,
+        }
+    }
+
+    /// The depth of the full expression tree
+    pub fn depth(&self) -> u64 {
+        match self {
+            Expression::Sum(s) => {
+                let depths = s.iter().map(|expr| expr.depth());
+
+                match depths.max() {
+                    Some(max) => max + 1,
+                    None => 0, // If the expression has no terms then it doesn't contribute to depth
+                }
+            }
+            Expression::Product(p) => {
+                let depths = p.iter().map(|expr| expr.depth());
+
+                match depths.max() {
+                    Some(max) => max + 1,
+                    None => 0, // If the expression has no terms then it doesn't contribute to depth
+                }
+            }
+            Expression::Group(g) => g.depth(),
+            Expression::Integer(_) => 0,
+            Expression::Variable(_, _) => 0,
         }
     }
 }
@@ -80,10 +97,12 @@ fn write_terms<'a>(
 
 #[cfg(test)]
 mod tests {
+    use std::fmt::Write;
+
     use super::Expression;
 
     #[test]
-    fn test_size() {
+    fn expression_write() {
         let expr = Expression::Product(vec![
             Expression::Sum(vec![
                 Expression::Integer(1),
@@ -92,15 +111,52 @@ mod tests {
             ]),
             Expression::group(Expression::Product(vec![
                 Expression::Integer(10),
-                Expression::Variable(2, "b".to_string())
-            ]))
+                Expression::Variable(2, "b".to_string()),
+            ])),
+        ]);
+
+        let mut written = String::new();
+        write!(&mut written, "{}", expr).expect("Error occured while trying to write to written");
+
+        assert_eq!("1 + a + 10 * (10 * 2b)", written);
+    }
+
+    #[test]
+    fn expression_size() {
+        let expr = Expression::Product(vec![
+            Expression::Sum(vec![
+                Expression::Integer(1),
+                Expression::Variable(1, "a".to_string()),
+                Expression::Integer(10),
+            ]),
+            Expression::group(Expression::Product(vec![
+                Expression::Integer(10),
+                Expression::Variable(2, "b".to_string()),
+            ])),
         ]);
 
         assert_eq!(5, expr.size());
     }
 
     #[test]
-    fn test_sum_simplify() {
+    fn expression_depth() {
+        let expr = Expression::Product(vec![
+            Expression::Sum(vec![
+                Expression::Integer(1),
+                Expression::Variable(1, "a".to_string()),
+                Expression::Integer(10),
+            ]),
+            Expression::group(Expression::Product(vec![
+                Expression::Integer(10),
+                Expression::Variable(2, "b".to_string()),
+            ])),
+        ]);
+
+        assert_eq!(2, expr.depth());
+    }
+
+    #[test]
+    fn sum_simplify() {
         let mut expr = Expression::Sum(vec![
             Expression::group(Expression::Sum(vec![
                 Expression::Variable(1, "a".to_string()),
