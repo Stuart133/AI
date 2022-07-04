@@ -12,17 +12,35 @@ pub enum Expression {
 
 impl Expression {
     pub fn group(root: Self) -> Self {
-      Expression::Group(Box::new(root))
+        Expression::Group(Box::new(root))
     }
-
 
     pub fn simplify(&mut self) {
         match self {
-            Expression::Sum(_) => todo!(),
-            Expression::Product(_) => todo!(),
-            Expression::Group(_) => todo!(),
+            Expression::Sum(_) => {},
+            Expression::Product(_) => {},
+            Expression::Group(_) => {},
             Expression::Integer(_) => {}
             Expression::Variable(_, _) => {}
+        }
+    }
+
+    /// The total number of terms in the expression
+    pub fn size(&self) -> u64 {
+        match self {
+            Expression::Sum(s) => {
+                s.iter().fold(0, |acc, expr| {
+                    expr.size() + acc
+                })
+            }
+            Expression::Product(p) => {
+                p.iter().fold(0, |acc, expr| {
+                    expr.size() + acc
+                })
+            }
+            Expression::Group(g) => g.size(),
+            Expression::Integer(_) => 1,
+            Expression::Variable(_, _) => 1,
         }
     }
 }
@@ -51,7 +69,10 @@ fn write_terms<'a>(
     sep: &'a str,
 ) -> std::fmt::Result {
     for i in 0..terms.len() - 1 {
-        write!(f, "{} + ", terms[i]);
+        match write!(f, "{} {} ", terms[i], sep) {
+            Ok(_) => {}
+            Err(e) => return Err(e),
+        };
     }
 
     write!(f, "{}", terms[terms.len() - 1])
@@ -62,13 +83,34 @@ mod tests {
     use super::Expression;
 
     #[test]
+    fn test_size() {
+        let expr = Expression::Product(vec![
+            Expression::Sum(vec![
+                Expression::Integer(1),
+                Expression::Variable(1, "a".to_string()),
+                Expression::Integer(10),
+            ]),
+            Expression::group(Expression::Product(vec![
+                Expression::Integer(10),
+                Expression::Variable(2, "b".to_string())
+            ]))
+        ]);
+
+        assert_eq!(5, expr.size());
+    }
+
+    #[test]
     fn test_sum_simplify() {
-        let expr = Expression::Sum(
-            Box::new(Expression::Group(Box::new(Expression::Sum(
-                Box::new(Expression::Variable(1, "a".to_string())),
-                Box::new(Expression::Variable(1, "b".to_string())),
-            )))),
-            Box::new(Expression::Variable(1, "c".to_string())),
-        );
+        let mut expr = Expression::Sum(vec![
+            Expression::group(Expression::Sum(vec![
+                Expression::Variable(1, "a".to_string()),
+                Expression::Variable(1, "b".to_string()),
+            ])),
+            Expression::Variable(1, "c".to_string()),
+        ]);
+
+        expr.simplify();
+
+        assert_eq!(3, expr.size());
     }
 }
