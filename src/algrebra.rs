@@ -36,13 +36,13 @@ impl Expression {
                 }
 
                 Expression::Sum(new_sum)
-            },
+            }
             Expression::Product(product) => {
                 let mut new_product = vec![];
 
                 for expr in product {
                     match expr {
-                        Expression::Product(mut p) => new_product.append(&mut p),   // Adjacent products can be merged
+                        Expression::Product(mut p) => new_product.append(&mut p), // Adjacent products can be merged
                         Expression::Group(g) => {
                             // Apply associative rule to adjactent grouped products: a * (b * c) == a * b * c
                             if let Expression::Product(mut p) = *g {
@@ -50,8 +50,8 @@ impl Expression {
                             } else {
                                 new_product.push(g.simplify())
                             }
-                        },
-                        _ => new_product.push(expr.simplify())
+                        }
+                        _ => new_product.push(expr.simplify()),
                     }
                 }
 
@@ -97,13 +97,23 @@ impl Expression {
             Expression::Variable(_, _) => 0,
         }
     }
+
+    fn precedence(&self) -> u64 {
+        match self {
+            Expression::Sum(_) => 2,
+            Expression::Product(_) => 3,
+            Expression::Group(_) => 4,
+            Expression::Integer(_) => 5,
+            Expression::Variable(_, _) => 5,
+        }
+    }
 }
 
 impl Display for Expression {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Expression::Sum(terms) => write_terms(terms, f, "+"),
-            Expression::Product(terms) => write_terms(terms, f, "*"),
+            Expression::Sum(terms) => write_terms(terms, self.precedence(), f, "+"),
+            Expression::Product(terms) => write_terms(terms, self.precedence(), f, "*"),
             Expression::Group(g) => write!(f, "({})", g),
             Expression::Integer(i) => write!(f, "{}", i),
             Expression::Variable(c, v) => {
@@ -119,14 +129,23 @@ impl Display for Expression {
 
 fn write_terms<'a>(
     terms: &Vec<Expression>,
+    precedence: u64,
     f: &mut std::fmt::Formatter<'_>,
     sep: &'a str,
 ) -> std::fmt::Result {
     for i in 0..terms.len() - 1 {
-        match write!(f, "{} {} ", terms[i], sep) {
-            Ok(_) => {}
-            Err(e) => return Err(e),
-        };
+        // Wrap the term in parenthesis if it's of lower precendence to preserve operation order
+        if terms[i].precedence() < precedence {
+            match write!(f, "({}) {} ", terms[i], sep) {
+                Ok(_) => {}
+                Err(e) => return Err(e),
+            };
+        } else {
+            match write!(f, "{} {} ", terms[i], sep) {
+                Ok(_) => {}
+                Err(e) => return Err(e),
+            };
+        }
     }
 
     write!(f, "{}", terms[terms.len() - 1])
@@ -162,10 +181,10 @@ mod tests {
                         Expression::Variable(2, "b".to_string()),
                     ])),
                 ]),
-                written: "1 + a + 10 * (10 * 2b)".to_string(),
+                written: "(1 + a + 10) * (10 * 2b)".to_string(),
                 depth: 2,
                 size: 5,
-                simplified_written: "1 + a + 10 * 10 * 2b".to_string(),
+                simplified_written: "(1 + a + 10) * 10 * 2b".to_string(),
                 simplified_depth: 2,
                 simplified_size: 5,
             },
@@ -179,7 +198,7 @@ mod tests {
                     Expression::Sum(vec![
                         Expression::Variable(2, "d".to_string()),
                         Expression::Integer(25),
-                    ])
+                    ]),
                 ]),
                 written: "(a + b) + c + 2d + 25".to_string(),
                 depth: 2,
