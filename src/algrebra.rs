@@ -15,13 +15,33 @@ impl Expression {
         Expression::Group(Box::new(root))
     }
 
-    pub fn simplify(&mut self) {
+    pub fn simplify(self) -> Self {
         match self {
-            Expression::Sum(_) => {}
-            Expression::Product(_) => {}
-            Expression::Group(_) => {}
-            Expression::Integer(_) => {}
-            Expression::Variable(_, _) => {}
+            Expression::Sum(sum) => {
+                let mut new_sum: Vec<Expression> = vec![];
+
+                for expr in sum {
+                    match expr {
+                        Expression::Sum(mut s) => new_sum.append(&mut s), // Adjacent sums can be merged
+                        Expression::Group(g) => {
+                            // Apply associative rule to adjacent grouped sums: a + (b + c) == a + b + c
+                            if let Expression::Sum(mut s) = *g {
+                                new_sum.append(&mut s)
+                            } else {
+                                new_sum.push(g.simplify())
+                            }
+                        }
+                        _ => {
+                            new_sum.push(expr.simplify())
+                        }
+                    }
+                }
+
+                Expression::Sum(new_sum)
+            }
+            Expression::Group(g) => g.simplify(),
+            // TODO: Simplify product
+            _ => self
         }
     }
 
@@ -165,8 +185,9 @@ mod tests {
             Expression::Variable(1, "c".to_string()),
         ]);
 
-        expr.simplify();
+        expr = expr.simplify();
 
         assert_eq!(3, expr.size());
+        assert_eq!(1, expr.depth());
     }
 }
