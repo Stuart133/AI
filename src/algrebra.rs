@@ -31,9 +31,7 @@ impl Expression {
                                 new_sum.push(g.simplify())
                             }
                         }
-                        _ => {
-                            new_sum.push(expr.simplify())
-                        }
+                        _ => new_sum.push(expr.simplify()),
                     }
                 }
 
@@ -41,7 +39,7 @@ impl Expression {
             }
             Expression::Group(g) => g.simplify(),
             // TODO: Simplify product
-            _ => self
+            _ => self,
         }
     }
 
@@ -121,62 +119,94 @@ mod tests {
 
     use super::Expression;
 
+    struct TestData {
+        expr: Expression,
+        written: String,
+        depth: u64,
+        size: u64,
+        simplified_written: String,
+        simplified_depth: u64,
+        simplified_size: u64,
+    }
+
+    fn generate_test_data() -> Vec<TestData> {
+        vec![
+            TestData {
+                expr: Expression::Product(vec![
+                    Expression::Sum(vec![
+                        Expression::Integer(1),
+                        Expression::Variable(1, "a".to_string()),
+                        Expression::Integer(10),
+                    ]),
+                    Expression::group(Expression::Product(vec![
+                        Expression::Integer(10),
+                        Expression::Variable(2, "b".to_string()),
+                    ])),
+                ]),
+                written: "1 + a + 10 * (10 * 2b)".to_string(),
+                depth: 2,
+                size: 5,
+                simplified_written: "1 + a + 10 * (10 * 2b)".to_string(),
+                simplified_depth: 2,
+                simplified_size: 5,
+            },
+            TestData {
+                expr: Expression::Sum(vec![
+                    Expression::group(Expression::Sum(vec![
+                        Expression::Variable(1, "a".to_string()),
+                        Expression::Variable(1, "b".to_string()),
+                    ])),
+                    Expression::Variable(1, "c".to_string()),
+                ]),
+                written: "(a + b) + c".to_string(),
+                depth: 2,
+                size: 3,
+                simplified_written: "a + b + c".to_string(),
+                simplified_depth: 1,
+                simplified_size: 3,
+            },
+        ]
+    }
+
     #[test]
     fn expression_write() {
-        let expr = Expression::Product(vec![
-            Expression::Sum(vec![
-                Expression::Integer(1),
-                Expression::Variable(1, "a".to_string()),
-                Expression::Integer(10),
-            ]),
-            Expression::group(Expression::Product(vec![
-                Expression::Integer(10),
-                Expression::Variable(2, "b".to_string()),
-            ])),
-        ]);
+        for data in generate_test_data() {
+            let mut written = String::new();
+            write!(&mut written, "{}", data.expr)
+                .expect("Error occured while trying to write to written");
 
-        let mut written = String::new();
-        write!(&mut written, "{}", expr).expect("Error occured while trying to write to written");
-
-        assert_eq!("1 + a + 10 * (10 * 2b)", written);
+            assert_eq!(data.written, written);
+        }
     }
 
     #[test]
     fn expression_size() {
-        let expr = Expression::Product(vec![
-            Expression::Sum(vec![
-                Expression::Integer(1),
-                Expression::Variable(1, "a".to_string()),
-                Expression::Integer(10),
-            ]),
-            Expression::group(Expression::Product(vec![
-                Expression::Integer(10),
-                Expression::Variable(2, "b".to_string()),
-            ])),
-        ]);
-
-        assert_eq!(5, expr.size());
+        for data in generate_test_data() {
+            assert_eq!(data.size, data.expr.size());
+        }
     }
 
     #[test]
     fn expression_depth() {
-        let expr = Expression::Product(vec![
-            Expression::Sum(vec![
-                Expression::Integer(1),
-                Expression::Variable(1, "a".to_string()),
-                Expression::Integer(10),
-            ]),
-            Expression::group(Expression::Product(vec![
-                Expression::Integer(10),
-                Expression::Variable(2, "b".to_string()),
-            ])),
-        ]);
-
-        assert_eq!(2, expr.depth());
+        for data in generate_test_data() {
+            assert_eq!(data.depth, data.expr.depth());
+        }
     }
 
     #[test]
     fn sum_simplify() {
+        for data in generate_test_data() {
+            let new_expr = data.expr.simplify();
+
+            let mut written = String::new();
+            write!(&mut written, "{}", new_expr)
+                .expect("Error occured while trying to write to written");
+
+            assert_eq!(data.simplified_size, new_expr.size());
+            assert_eq!(data.simplified_depth, new_expr.depth());
+            assert_eq!(data.simplified_written, written);
+        }
+
         let mut expr = Expression::Sum(vec![
             Expression::group(Expression::Sum(vec![
                 Expression::Variable(1, "a".to_string()),
@@ -187,7 +217,11 @@ mod tests {
 
         expr = expr.simplify();
 
+        let mut written = String::new();
+        write!(&mut written, "{}", expr).expect("Error occured while trying to write to written");
+
         assert_eq!(3, expr.size());
         assert_eq!(1, expr.depth());
+        assert_eq!("a + b + c", written);
     }
 }
