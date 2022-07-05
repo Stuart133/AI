@@ -18,7 +18,7 @@ impl Expression {
     pub fn simplify(self) -> Self {
         match self {
             Expression::Sum(sum) => {
-                let mut new_sum: Vec<Expression> = vec![];
+                let mut new_sum = vec![];
 
                 for expr in sum {
                     match expr {
@@ -36,9 +36,28 @@ impl Expression {
                 }
 
                 Expression::Sum(new_sum)
+            },
+            Expression::Product(product) => {
+                let mut new_product = vec![];
+
+                for expr in product {
+                    match expr {
+                        Expression::Product(mut p) => new_product.append(&mut p),   // Adjacent products can be merged
+                        Expression::Group(g) => {
+                            // Apply associative rule to adjactent grouped products: a * (b * c) == a * b * c
+                            if let Expression::Product(mut p) = *g {
+                                new_product.append(&mut p)
+                            } else {
+                                new_product.push(g.simplify())
+                            }
+                        },
+                        _ => new_product.push(expr.simplify())
+                    }
+                }
+
+                Expression::Product(new_product)
             }
             Expression::Group(g) => g.simplify(),
-            // TODO: Simplify product
             _ => self,
         }
     }
@@ -146,7 +165,7 @@ mod tests {
                 written: "1 + a + 10 * (10 * 2b)".to_string(),
                 depth: 2,
                 size: 5,
-                simplified_written: "1 + a + 10 * (10 * 2b)".to_string(),
+                simplified_written: "1 + a + 10 * 10 * 2b".to_string(),
                 simplified_depth: 2,
                 simplified_size: 5,
             },
@@ -157,13 +176,17 @@ mod tests {
                         Expression::Variable(1, "b".to_string()),
                     ])),
                     Expression::Variable(1, "c".to_string()),
+                    Expression::Sum(vec![
+                        Expression::Variable(2, "d".to_string()),
+                        Expression::Integer(25),
+                    ])
                 ]),
-                written: "(a + b) + c".to_string(),
+                written: "(a + b) + c + 2d + 25".to_string(),
                 depth: 2,
-                size: 3,
-                simplified_written: "a + b + c".to_string(),
+                size: 5,
+                simplified_written: "a + b + c + 2d + 25".to_string(),
                 simplified_depth: 1,
-                simplified_size: 3,
+                simplified_size: 5,
             },
         ]
     }
