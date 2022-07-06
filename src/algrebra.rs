@@ -5,16 +5,11 @@ use std::fmt::Display;
 pub enum Expression {
     Sum(Vec<Self>),
     Product(Vec<Self>),
-    Group(Box<Self>),
     Integer(i64),
     Variable(i64, String),
 }
 
 impl Expression {
-    pub fn group(root: Self) -> Self {
-        Expression::Group(Box::new(root))
-    }
-
     pub fn simplify(self) -> Self {
         match self {
             Expression::Sum(sum) => {
@@ -23,14 +18,6 @@ impl Expression {
                 for expr in sum {
                     match expr {
                         Expression::Sum(mut s) => new_sum.append(&mut s), // Adjacent sums can be merged
-                        Expression::Group(g) => {
-                            // Apply associative rule to adjacent grouped sums: a + (b + c) == a + b + c
-                            if let Expression::Sum(mut s) = *g {
-                                new_sum.append(&mut s)
-                            } else {
-                                new_sum.push(g.simplify())
-                            }
-                        }
                         _ => new_sum.push(expr.simplify()),
                     }
                 }
@@ -43,21 +30,12 @@ impl Expression {
                 for expr in product {
                     match expr {
                         Expression::Product(mut p) => new_product.append(&mut p), // Adjacent products can be merged
-                        Expression::Group(g) => {
-                            // Apply associative rule to adjactent grouped products: a * (b * c) == a * b * c
-                            if let Expression::Product(mut p) = *g {
-                                new_product.append(&mut p)
-                            } else {
-                                new_product.push(g.simplify())
-                            }
-                        }
                         _ => new_product.push(expr.simplify()),
                     }
                 }
 
                 Expression::Product(new_product)
             }
-            Expression::Group(g) => g.simplify(),
             _ => self,
         }
     }
@@ -67,7 +45,6 @@ impl Expression {
         match self {
             Expression::Sum(s) => s.iter().fold(0, |acc, expr| expr.size() + acc),
             Expression::Product(p) => p.iter().fold(0, |acc, expr| expr.size() + acc),
-            Expression::Group(g) => g.size(),
             Expression::Integer(_) => 1,
             Expression::Variable(_, _) => 1,
         }
@@ -92,7 +69,6 @@ impl Expression {
                     None => 0, // If the expression has no terms then it doesn't contribute to depth
                 }
             }
-            Expression::Group(g) => g.depth(),
             Expression::Integer(_) => 0,
             Expression::Variable(_, _) => 0,
         }
@@ -102,9 +78,8 @@ impl Expression {
         match self {
             Expression::Sum(_) => 2,
             Expression::Product(_) => 3,
-            Expression::Group(_) => 4,
-            Expression::Integer(_) => 5,
-            Expression::Variable(_, _) => 5,
+            Expression::Integer(_) => 4,
+            Expression::Variable(_, _) => 4,
         }
     }
 }
@@ -114,7 +89,6 @@ impl Display for Expression {
         match self {
             Expression::Sum(terms) => write_terms(terms, self.precedence(), f, "+"),
             Expression::Product(terms) => write_terms(terms, self.precedence(), f, "*"),
-            Expression::Group(g) => write!(f, "({})", g),
             Expression::Integer(i) => write!(f, "{}", i),
             Expression::Variable(c, v) => {
                 if *c == 1 {
@@ -176,12 +150,12 @@ mod tests {
                         Expression::Variable(1, "a".to_string()),
                         Expression::Integer(10),
                     ]),
-                    Expression::group(Expression::Product(vec![
+                    Expression::Product(vec![
                         Expression::Integer(10),
                         Expression::Variable(2, "b".to_string()),
-                    ])),
+                    ]),
                 ]),
-                written: "(1 + a + 10) * (10 * 2b)".to_string(),
+                written: "(1 + a + 10) * 10 * 2b".to_string(),
                 depth: 2,
                 size: 5,
                 simplified_written: "(1 + a + 10) * 10 * 2b".to_string(),
@@ -190,17 +164,17 @@ mod tests {
             },
             TestData {
                 expr: Expression::Sum(vec![
-                    Expression::group(Expression::Sum(vec![
+                    Expression::Sum(vec![
                         Expression::Variable(1, "a".to_string()),
                         Expression::Variable(1, "b".to_string()),
-                    ])),
+                    ]),
                     Expression::Variable(1, "c".to_string()),
                     Expression::Sum(vec![
                         Expression::Variable(2, "d".to_string()),
                         Expression::Integer(25),
                     ]),
                 ]),
-                written: "(a + b) + c + 2d + 25".to_string(),
+                written: "a + b + c + 2d + 25".to_string(),
                 depth: 2,
                 size: 5,
                 simplified_written: "a + b + c + 2d + 25".to_string(),
@@ -248,22 +222,5 @@ mod tests {
             assert_eq!(data.simplified_depth, new_expr.depth());
             assert_eq!(data.simplified_written, written);
         }
-
-        let mut expr = Expression::Sum(vec![
-            Expression::group(Expression::Sum(vec![
-                Expression::Variable(1, "a".to_string()),
-                Expression::Variable(1, "b".to_string()),
-            ])),
-            Expression::Variable(1, "c".to_string()),
-        ]);
-
-        expr = expr.simplify();
-
-        let mut written = String::new();
-        write!(&mut written, "{}", expr).expect("Error occured while trying to write to written");
-
-        assert_eq!(3, expr.size());
-        assert_eq!(1, expr.depth());
-        assert_eq!("a + b + c", written);
     }
 }
