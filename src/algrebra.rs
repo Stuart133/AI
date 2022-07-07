@@ -53,7 +53,7 @@ impl Expression {
                                 // We've already consumed the next term, so skip it now
                                 iter.next();
                             } else {
-                                new_product.push(expr.simplify())
+                                new_product.push(Expression::Sum(s).simplify())
                             }
                         }
                         _ => new_product.push(expr.simplify()),
@@ -271,8 +271,8 @@ mod tests {
             write!(&mut written, "{}", new_expr)
                 .expect("Error occured while trying to write to written");
 
-            //assert_eq!(data.simplified_size, new_expr.size());
-            //assert_eq!(data.simplified_depth, new_expr.depth());
+            assert_eq!(data.simplified_size, new_expr.size());
+            assert_eq!(data.simplified_depth, new_expr.depth());
             assert_eq!(data.simplified_written, written);
         }
     }
