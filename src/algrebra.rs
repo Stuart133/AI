@@ -122,7 +122,11 @@ fn write_terms<'a>(
         }
     }
 
-    write!(f, "{}", terms[terms.len() - 1])
+    if terms[terms.len() - 1].precedence() < precedence {
+        write!(f, "({})", terms[terms.len() - 1])
+    } else {
+        write!(f, "{}", terms[terms.len() - 1])
+    }    
 }
 
 #[cfg(test)]
@@ -143,6 +147,24 @@ mod tests {
 
     fn generate_test_data() -> Vec<TestData> {
         vec![
+            TestData {
+                expr: Expression::Product(vec![
+                    Expression::Sum(vec![
+                        Expression::Variable(1, "a".to_string()),
+                        Expression::Variable(1, "b".to_string()),
+                    ]),
+                    Expression::Sum(vec![
+                        Expression::Variable(1, "c".to_string()),
+                        Expression::Variable(1, "d".to_string()),
+                    ])
+                ]),
+                written: "(a + b) * (c + d)".to_string(),
+                depth: 2,
+                size: 4,
+                simplified_written: "(a + b) * (c + d)".to_string(),
+                simplified_depth: 2,
+                simplified_size: 4,
+            },
             TestData {
                 expr: Expression::Product(vec![
                     Expression::Sum(vec![
