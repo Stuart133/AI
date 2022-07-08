@@ -1,6 +1,7 @@
 use crate::algrebra::*;
 
 mod algrebra;
+pub mod graph;
 
 fn main() {
     let expr = Expression::Sum(vec![
