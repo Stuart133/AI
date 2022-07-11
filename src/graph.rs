@@ -2,15 +2,16 @@
 
 use std::mem;
 
-pub struct Graph {
-    nodes: Vec<Node>,
+pub struct Graph<T> {
+    nodes: Vec<Node<T>>,
     edges: Vec<Edge>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct NodeIndex(usize);
 
-pub struct Node {
+pub struct Node<T> {
+    value: T,
     first_outgoing_edge: Option<EdgeIndex>,
 }
 
@@ -18,11 +19,12 @@ pub struct Node {
 pub struct EdgeIndex(usize);
 
 pub struct Edge {
+    weight: usize,
     target: NodeIndex,
     next_outgoing_edge: Option<EdgeIndex>,
 }
 
-impl Graph {
+impl<T> Graph<T> {
     pub fn new() -> Self {
         Graph {
             nodes: vec![],
@@ -30,16 +32,17 @@ impl Graph {
         }
     }
 
-    pub fn add_node(&mut self) -> NodeIndex {
+    pub fn add_node(&mut self, value: T) -> NodeIndex {
         let index = self.nodes.len();
-        self.nodes.push(Node {
+        self.nodes.push(Node::<T> {
+            value,
             first_outgoing_edge: None,
         });
 
         NodeIndex(index)
     }
 
-    pub fn add_edge(&mut self, source: NodeIndex, target: NodeIndex) -> Result<(), ()> {
+    pub fn add_edge(&mut self, weight: usize, source: NodeIndex, target: NodeIndex) -> Result<(), ()> {
         if source.0 >= self.nodes.len() || target.0 >= self.nodes.len() {
           return Err(())
         }
@@ -48,11 +51,16 @@ impl Graph {
         let node = &mut self.nodes[source.0];
 
         self.edges.push(Edge {
+            weight,
             target,
             next_outgoing_edge: mem::replace(&mut node.first_outgoing_edge, Some(edge_index)),
         });
 
         Ok(())
+    }
+
+    pub fn depth_first_search(&self, source: NodeIndex, target: NodeIndex) -> Vec<T> {
+        vec![]
     }
 }
 
@@ -64,8 +72,8 @@ mod tests {
     pub fn add_nodes() {
         let mut graph = Graph::new();
 
-        graph.add_node();
-        graph.add_node();
+        graph.add_node(10);
+        graph.add_node(10);
 
         assert_eq!(2, graph.nodes.len());
         assert_eq!(None, graph.nodes[0].first_outgoing_edge);
@@ -77,12 +85,12 @@ mod tests {
 
         let mut indices = vec![];
         for _ in 0..5 {
-            indices.push(graph.add_node());
+            indices.push(graph.add_node(1));
         }
 
-        graph.add_edge(indices[0], indices[1]).expect("node index out of range");
-        graph.add_edge(indices[0], indices[2]).expect("node index out of range");
-        graph.add_edge(indices[0], indices[3]).expect("node index out of range");
+        graph.add_edge(1, indices[0], indices[1]).expect("node index out of range");
+        graph.add_edge(1, indices[0], indices[2]).expect("node index out of range");
+        graph.add_edge(1, indices[0], indices[3]).expect("node index out of range");
 
         assert_eq!(3, graph.edges.len());
 
