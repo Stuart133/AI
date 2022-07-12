@@ -1,7 +1,7 @@
 //! A simple adjacency list based directed graph
 
 use std::{
-    collections::{HashSet, VecDeque},
+    collections::{BinaryHeap, HashMap, HashSet, VecDeque},
     mem,
 };
 
@@ -41,6 +41,25 @@ pub struct InputEdge {
 pub struct Successors<'graph, T> {
     graph: &'graph Graph<T>,
     current_edge_index: Option<EdgeIndex>,
+}
+
+#[derive(PartialEq, Eq)]
+struct WeightedPath {
+    current_cost: usize,
+    total_cost: usize,
+    path: Vec<NodeIndex>,
+}
+
+impl PartialOrd for WeightedPath {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        self.total_cost.partial_cmp(&other.total_cost)
+    }
+}
+
+impl Ord for WeightedPath {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.total_cost.cmp(&other.total_cost)
+    }
 }
 
 impl<T> Graph<T> {
@@ -106,6 +125,50 @@ impl<T> Graph<T> {
         }
     }
 
+    pub fn a_star_search(
+        &self,
+        source: NodeIndex,
+        target: NodeIndex,
+        heuristic: HashMap<NodeIndex, usize>,
+    ) -> Option<Vec<NodeIndex>> {
+        let mut extended_list = HashSet::new();
+        let mut agenda = BinaryHeap::<WeightedPath>::new();
+        agenda.push(WeightedPath {
+            current_cost: 0,
+            total_cost: *heuristic.get(&source).expect("missing heuristic value"),
+            path: vec![source],
+        });
+
+        while let Some(weighted_path) = agenda.pop() {
+            let index = weighted_path.path[weighted_path.path.len() - 1];
+            if index == target {
+                return Some(weighted_path.path);
+            }
+
+            extended_list.insert(index);
+            println!("{:?}", weighted_path.path);
+
+            for (node_index, cost) in self.successors(index) {
+                // Only extend nodes we've not already extended
+                if !extended_list.contains(&node_index) {
+                    let mut new_path = weighted_path.path.clone();
+                    let new_cost = weighted_path.current_cost + cost;
+                    new_path.push(node_index);
+
+                    agenda.push(WeightedPath {
+                        current_cost: new_cost,
+                        total_cost: new_cost
+                            + heuristic.get(&node_index).expect("missing heuristic value"),
+                        path: new_path,
+                    })
+                }
+            }
+        }
+
+        // No path found
+        None
+    }
+
     pub fn breadth_first_search(
         &self,
         source: NodeIndex,
@@ -123,7 +186,7 @@ impl<T> Graph<T> {
 
             extended_list.insert(index);
 
-            for node_index in self.successors(index) {
+            for (node_index, _) in self.successors(index) {
                 // Only extend nodes we've not already extended
                 if !extended_list.contains(&node_index) {
                     let mut new_path = path.clone();
@@ -154,7 +217,7 @@ impl<T> Graph<T> {
 
             extended_list.insert(index);
 
-            for node_index in self.successors(index) {
+            for (node_index, _) in self.successors(index) {
                 // Only extend nodes we've not already extended
                 if !extended_list.contains(&node_index) {
                     let mut new_path = path.clone();
@@ -170,14 +233,14 @@ impl<T> Graph<T> {
 }
 
 impl<'graph, T> Iterator for Successors<'graph, T> {
-    type Item = NodeIndex;
+    type Item = (NodeIndex, usize);
 
     fn next(&mut self) -> Option<Self::Item> {
         match self.current_edge_index {
             Some(index) => {
                 let edge = &self.graph.edges[index.0];
                 self.current_edge_index = edge.next_outgoing_edge;
-                Some(edge.target)
+                Some((edge.target, edge.weight))
             }
             None => None,
         }
@@ -186,9 +249,11 @@ impl<'graph, T> Iterator for Successors<'graph, T> {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+
     use super::{Graph, InputEdge, NodeIndex};
 
-    fn generate_test_graphs<'a>() -> Vec<Graph<&'a str>> {
+    fn generate_test_graphs<'a>() -> Vec<(Graph<&'a str>, HashMap<NodeIndex, usize>)> {
         let mut graphs = vec![];
 
         let nodes = vec!["S", "A", "B", "C", "D", "E", "F", "G"];
@@ -221,7 +286,7 @@ mod tests {
             InputEdge {
                 weight: 9,
                 source: NodeIndex(3),
-                target: NodeIndex(4),
+                target: NodeIndex(5),
             },
             InputEdge {
                 weight: 7,
@@ -249,62 +314,72 @@ mod tests {
                 target: NodeIndex(7),
             },
         ];
-        graphs.push(Graph::new(nodes, edges).expect("invalid test graph"));
+        let heuristic = HashMap::from([
+            (NodeIndex(0), 25),
+            (NodeIndex(1), 20),
+            (NodeIndex(2), 22),
+            (NodeIndex(3), 15),
+            (NodeIndex(4), 8),
+            (NodeIndex(5), 3),
+            (NodeIndex(6), 9),
+            (NodeIndex(7), 0),
+        ]);
+        graphs.push((Graph::new(nodes, edges).expect("invalid test graph"), heuristic));
 
-        let nodes = vec!["S", "A", "B", "C", "D", "E", "F", "G"];
-        let edges = vec![
-            InputEdge {
-                weight: 10,
-                source: NodeIndex(0),
-                target: NodeIndex(2),
-            },
-            InputEdge {
-                weight: 10,
-                source: NodeIndex(0),
-                target: NodeIndex(1),
-            },
-            InputEdge {
-                weight: 10,
-                source: NodeIndex(2),
-                target: NodeIndex(3),
-            },
-            InputEdge {
-                weight: 10,
-                source: NodeIndex(2),
-                target: NodeIndex(1),
-            },
-            InputEdge {
-                weight: 10,
-                source: NodeIndex(1),
-                target: NodeIndex(4),
-            },
-            InputEdge {
-                weight: 10,
-                source: NodeIndex(4),
-                target: NodeIndex(5),
-            },
-            InputEdge {
-                weight: 10,
-                source: NodeIndex(4),
-                target: NodeIndex(7),
-            },
-            InputEdge {
-                weight: 10,
-                source: NodeIndex(5),
-                target: NodeIndex(6),
-            },
-            InputEdge {
-                weight: 10,
-                source: NodeIndex(6),
-                target: NodeIndex(4),
-            },
-            InputEdge {
-                weight: 10,
-                source: NodeIndex(6),
-                target: NodeIndex(7),
-            },
-        ];
-        graphs.push(Graph::new(nodes, edges).expect("invalid test graph"));
+        // let nodes = vec!["S", "A", "B", "C", "D", "E", "F", "G"];
+        // let edges = vec![
+        //     InputEdge {
+        //         weight: 10,
+        //         source: NodeIndex(0),
+        //         target: NodeIndex(2),
+        //     },
+        //     InputEdge {
+        //         weight: 10,
+        //         source: NodeIndex(0),
+        //         target: NodeIndex(1),
+        //     },
+        //     InputEdge {
+        //         weight: 10,
+        //         source: NodeIndex(2),
+        //         target: NodeIndex(3),
+        //     },
+        //     InputEdge {
+        //         weight: 10,
+        //         source: NodeIndex(2),
+        //         target: NodeIndex(1),
+        //     },
+        //     InputEdge {
+        //         weight: 10,
+        //         source: NodeIndex(1),
+        //         target: NodeIndex(4),
+        //     },
+        //     InputEdge {
+        //         weight: 10,
+        //         source: NodeIndex(4),
+        //         target: NodeIndex(5),
+        //     },
+        //     InputEdge {
+        //         weight: 10,
+        //         source: NodeIndex(4),
+        //         target: NodeIndex(7),
+        //     },
+        //     InputEdge {
+        //         weight: 10,
+        //         source: NodeIndex(5),
+        //         target: NodeIndex(6),
+        //     },
+        //     InputEdge {
+        //         weight: 10,
+        //         source: NodeIndex(6),
+        //         target: NodeIndex(4),
+        //     },
+        //     InputEdge {
+        //         weight: 10,
+        //         source: NodeIndex(6),
+        //         target: NodeIndex(7),
+        //     },
+        // ];
+        // graphs.push(Graph::new(nodes, edges).expect("invalid test graph"));
 
         graphs
     }
@@ -382,14 +457,14 @@ mod tests {
 
         let graph = Graph::new(nodes, edges).expect("test graph was not valid");
 
-        for (i, successor) in graph.successors(NodeIndex(0)).enumerate() {
+        for (i, (successor, _)) in graph.successors(NodeIndex(0)).enumerate() {
             assert_eq!(4 - i, successor.0);
         }
     }
 
     #[test]
     pub fn depth_first_search() {
-        for graph in generate_test_graphs() {
+        for (graph, _) in generate_test_graphs() {
             let path = graph
                 .depth_first_search(NodeIndex(0), NodeIndex(7))
                 .expect("could not find path");
@@ -401,8 +476,21 @@ mod tests {
     }
 
     #[test]
+    pub fn a_star_first_search() {
+        for (graph, heuristic) in generate_test_graphs() {
+            let path = graph
+                .a_star_search(NodeIndex(0), NodeIndex(7), heuristic)
+                .expect("could not find path");
+
+            // Ensure that the path does start at start and end at end
+            assert_eq!(path[0].0, 0);
+            assert_eq!(path[path.len() - 1].0, 7);
+        }
+    }
+
+    #[test]
     pub fn breadth_first_search() {
-        for graph in generate_test_graphs() {
+        for (graph, _) in generate_test_graphs() {
             let path = graph
                 .breadth_first_search(NodeIndex(0), NodeIndex(7))
                 .expect("could not find path");
