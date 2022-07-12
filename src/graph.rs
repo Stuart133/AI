@@ -1,6 +1,6 @@
 //! A simple adjacency list based directed graph
 
-use std::{collections::HashSet, mem};
+use std::{collections::{HashSet, VecDeque}, mem};
 
 #[derive(Debug)]
 pub struct Graph<T> {
@@ -103,6 +103,35 @@ impl<T> Graph<T> {
         }
     }
 
+    pub fn breadth_first_search(&self, source: NodeIndex, target: NodeIndex) -> Option<Vec<NodeIndex>> {
+        let mut extended_list = HashSet::new();
+        let mut agenda = VecDeque::<Vec<NodeIndex>>::new();
+        agenda.push_back(vec![source]);
+
+        while let Some(path) = agenda.pop_front() {
+            let index = path[path.len() - 1];          
+            if index == target {
+                return Some(path);
+            }
+
+            extended_list.insert(index);
+
+            for node_index in self.successors(index) {
+                // Only extend nodes we've not already extended
+                if !extended_list.contains(&node_index) {
+                    let mut new_path = path.clone();
+                    new_path.push(node_index);
+                    agenda.push_back(new_path);
+                }
+            }
+
+            println!("{:?}", agenda);
+        }
+
+        // No path found
+        None
+    }
+
     pub fn depth_first_search(
         &self,
         source: NodeIndex,
@@ -130,7 +159,7 @@ impl<T> Graph<T> {
             }
         }
 
-        // No path found, return empty path for now
+        // No path found
         None
     }
 }
@@ -233,6 +262,11 @@ mod tests {
                 weight: 10,
                 source: NodeIndex(2),
                 target: NodeIndex(3),
+            },
+            InputEdge {
+                weight: 10,
+                source: NodeIndex(2),
+                target: NodeIndex(1),
             },
             InputEdge {
                 weight: 10,
@@ -353,6 +387,19 @@ mod tests {
         for graph in generate_test_graphs() {
             let path = graph
                 .depth_first_search(NodeIndex(0), NodeIndex(7))
+                .expect("could not find path");
+
+            // Ensure that the path does start at start and end at end
+            assert_eq!(path[0].0, 0);
+            assert_eq!(path[path.len() - 1].0, 7);
+        }
+    }
+
+    #[test]
+    pub fn breadth_first_search() {
+        for graph in generate_test_graphs() {
+            let path = graph
+                .breadth_first_search(NodeIndex(0), NodeIndex(7))
                 .expect("could not find path");
 
             // Ensure that the path does start at start and end at end
