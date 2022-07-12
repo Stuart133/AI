@@ -1,6 +1,9 @@
 //! A simple adjacency list based directed graph
 
-use std::{collections::{HashSet, VecDeque}, mem};
+use std::{
+    collections::{HashSet, VecDeque},
+    mem,
+};
 
 #[derive(Debug)]
 pub struct Graph<T> {
@@ -103,13 +106,17 @@ impl<T> Graph<T> {
         }
     }
 
-    pub fn breadth_first_search(&self, source: NodeIndex, target: NodeIndex) -> Option<Vec<NodeIndex>> {
+    pub fn breadth_first_search(
+        &self,
+        source: NodeIndex,
+        target: NodeIndex,
+    ) -> Option<Vec<NodeIndex>> {
         let mut extended_list = HashSet::new();
         let mut agenda = VecDeque::<Vec<NodeIndex>>::new();
         agenda.push_back(vec![source]);
 
         while let Some(path) = agenda.pop_front() {
-            let index = path[path.len() - 1];          
+            let index = path[path.len() - 1];
             if index == target {
                 return Some(path);
             }
@@ -124,8 +131,6 @@ impl<T> Graph<T> {
                     agenda.push_back(new_path);
                 }
             }
-
-            println!("{:?}", agenda);
         }
 
         // No path found
@@ -141,8 +146,8 @@ impl<T> Graph<T> {
         let mut agenda = Vec::<Vec<NodeIndex>>::new();
         agenda.push(vec![source]);
 
-        while let Some(path) = agenda.pop() {           
-            let index = path[path.len() - 1];          
+        while let Some(path) = agenda.pop() {
+            let index = path[path.len() - 1];
             if index == target {
                 return Some(path);
             }
