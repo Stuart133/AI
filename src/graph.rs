@@ -1,6 +1,6 @@
 //! A simple adjacency list based directed graph
 
-use std::{mem, collections::HashMap};
+use std::{collections::HashSet, mem};
 
 #[derive(Debug)]
 pub struct Graph<T> {
@@ -28,17 +28,40 @@ pub struct Edge {
 }
 
 #[derive(Debug)]
+pub struct InputEdge {
+    weight: usize,
+    source: NodeIndex,
+    target: NodeIndex,
+}
+
+#[derive(Debug)]
 pub struct Successors<'graph, T> {
     graph: &'graph Graph<T>,
     current_edge_index: Option<EdgeIndex>,
 }
 
 impl<T> Graph<T> {
-    pub fn new() -> Self {
+    pub fn new_empty() -> Self {
         Graph {
             nodes: vec![],
             edges: vec![],
         }
+    }
+
+    pub fn new(nodes: Vec<T>, edges: Vec<InputEdge>) -> Result<Self, ()> {
+        let mut graph = Graph::new_empty();
+        for node in nodes {
+            graph.add_node(node);
+        }
+
+        for edge in edges {
+            match graph.add_edge(edge.weight, edge.source, edge.target) {
+                Ok(_) => {}
+                Err(_) => return Err(()),
+            }
+        }
+
+        Ok(graph)
     }
 
     pub fn add_node(&mut self, value: T) -> NodeIndex {
@@ -80,8 +103,12 @@ impl<T> Graph<T> {
         }
     }
 
-    pub fn depth_first_search(&self, source: NodeIndex, target: NodeIndex) -> Option<Vec<NodeIndex>> {
-        let mut agenda = Vec::<Vec::<NodeIndex>>::new();
+    pub fn depth_first_search(
+        &self,
+        source: NodeIndex,
+        target: NodeIndex,
+    ) -> Option<Vec<NodeIndex>> {
+        let mut agenda = Vec::<Vec<NodeIndex>>::new();
         agenda.push(vec![source]);
 
         while let Some(path) = agenda.pop() {
@@ -113,7 +140,7 @@ impl<'graph, T> Iterator for Successors<'graph, T> {
                 let edge = &self.graph.edges[index.0];
                 self.current_edge_index = edge.next_outgoing_edge;
                 Some(edge.target)
-            },
+            }
             None => None,
         }
     }
@@ -125,7 +152,7 @@ mod tests {
 
     #[test]
     pub fn add_nodes() {
-        let mut graph = Graph::new();
+        let mut graph = Graph::new_empty();
 
         graph.add_node(10);
         graph.add_node(10);
@@ -136,7 +163,7 @@ mod tests {
 
     #[test]
     pub fn add_nodes_edges() {
-        let mut graph = Graph::new();
+        let mut graph = Graph::new_empty();
 
         let mut indices = vec![];
         for _ in 0..5 {
