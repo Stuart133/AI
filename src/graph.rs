@@ -112,6 +112,7 @@ impl<T> Graph<T> {
         agenda.push(vec![source]);
 
         while let Some(path) = agenda.pop() {
+            println!("{:?}", path);
             let index = path[path.len() - 1];
             if index == target {
                 return Some(path);
@@ -148,7 +149,123 @@ impl<'graph, T> Iterator for Successors<'graph, T> {
 
 #[cfg(test)]
 mod tests {
-    use super::Graph;
+    use super::{Graph, InputEdge, NodeIndex};
+
+    fn generate_test_graphs<'a>() -> Vec<Graph<&'a str>> {
+        let mut graphs = vec![];
+
+        let nodes = vec!["S", "A", "B", "C", "D", "E", "F", "G"];
+        let edges = vec![
+            InputEdge {
+                weight: 10,
+                source: NodeIndex(0),
+                target: NodeIndex(1),
+            },
+            InputEdge {
+                weight: 4,
+                source: NodeIndex(0),
+                target: NodeIndex(2),
+            },
+            InputEdge {
+                weight: 9,
+                source: NodeIndex(1),
+                target: NodeIndex(3),
+            },
+            InputEdge {
+                weight: 8,
+                source: NodeIndex(2),
+                target: NodeIndex(3),
+            },
+            InputEdge {
+                weight: 7,
+                source: NodeIndex(3),
+                target: NodeIndex(4),
+            },
+            InputEdge {
+                weight: 9,
+                source: NodeIndex(3),
+                target: NodeIndex(4),
+            },
+            InputEdge {
+                weight: 7,
+                source: NodeIndex(4),
+                target: NodeIndex(5),
+            },
+            InputEdge {
+                weight: 12,
+                source: NodeIndex(4),
+                target: NodeIndex(6),
+            },
+            InputEdge {
+                weight: 8,
+                source: NodeIndex(5),
+                target: NodeIndex(6),
+            },
+            InputEdge {
+                weight: 5,
+                source: NodeIndex(5),
+                target: NodeIndex(7),
+            },
+            InputEdge {
+                weight: 10,
+                source: NodeIndex(6),
+                target: NodeIndex(7),
+            },
+        ];
+        graphs.push(Graph::new(nodes, edges).expect("invalid test graph"));
+
+        let nodes = vec!["S", "A", "B", "C", "D", "E", "F", "G"];
+        let edges = vec![
+            InputEdge {
+                weight: 10,
+                source: NodeIndex(0),
+                target: NodeIndex(2),
+            },
+            InputEdge {
+                weight: 10,
+                source: NodeIndex(0),
+                target: NodeIndex(1),
+            },
+            InputEdge {
+                weight: 10,
+                source: NodeIndex(2),
+                target: NodeIndex(3),
+            },
+            InputEdge {
+                weight: 10,
+                source: NodeIndex(1),
+                target: NodeIndex(4),
+            },
+            InputEdge {
+                weight: 10,
+                source: NodeIndex(4),
+                target: NodeIndex(5),
+            },
+            InputEdge {
+                weight: 10,
+                source: NodeIndex(4),
+                target: NodeIndex(7),
+            },
+            InputEdge {
+                weight: 10,
+                source: NodeIndex(5),
+                target: NodeIndex(6),
+            },
+            InputEdge {
+                weight: 10,
+                source: NodeIndex(6),
+                target: NodeIndex(7),
+            },
+            InputEdge {
+                weight: 10,
+                source: NodeIndex(6),
+                target: NodeIndex(4),
+            },
+        ];
+        graphs.push(Graph::new(nodes, edges).expect("invalid test graph"));
+
+        graphs
+    }
 
     #[test]
     pub fn add_nodes() {
@@ -192,6 +309,52 @@ mod tests {
                 .next_outgoing_edge
                 .expect("node 0 missing expected edge")
                 .0];
+        }
+    }
+
+    #[test]
+    pub fn get_successors() {
+        let nodes = vec![1, 2, 3, 4, 5];
+        let edges = vec![
+            InputEdge {
+                weight: 1,
+                source: NodeIndex(0),
+                target: NodeIndex(1),
+            },
+            InputEdge {
+                weight: 1,
+                source: NodeIndex(0),
+                target: NodeIndex(2),
+            },
+            InputEdge {
+                weight: 1,
+                source: NodeIndex(0),
+                target: NodeIndex(3),
+            },
+            InputEdge {
+                weight: 1,
+                source: NodeIndex(0),
+                target: NodeIndex(4),
+            },
+        ];
+
+        let graph = Graph::new(nodes, edges).expect("test graph was not valid");
+
+        for (i, successor) in graph.successors(NodeIndex(0)).enumerate() {
+            assert_eq!(4 - i, successor.0);
+        }
+    }
+
+    #[test]
+    pub fn depth_first_search() {
+        for graph in generate_test_graphs() {
+            let path = graph
+                .depth_first_search(NodeIndex(0), NodeIndex(7))
+                .expect("could not find path");
+
+            // Ensure that the path does start at start and end at end
+            assert_eq!(path[0].0, 0);
+            assert_eq!(path[path.len() - 1].0, 7);
         }
     }
 }
