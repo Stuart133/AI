@@ -108,18 +108,21 @@ impl<T> Graph<T> {
         source: NodeIndex,
         target: NodeIndex,
     ) -> Option<Vec<NodeIndex>> {
+        let mut extended_list = HashSet::new();
         let mut agenda = Vec::<Vec<NodeIndex>>::new();
         agenda.push(vec![source]);
 
-        while let Some(path) = agenda.pop() {
-            println!("{:?}", path);
-            let index = path[path.len() - 1];
+        while let Some(path) = agenda.pop() {           
+            let index = path[path.len() - 1];          
             if index == target {
                 return Some(path);
             }
 
+            extended_list.insert(index);
+
             for node_index in self.successors(index) {
-                if !path.contains(&node_index) {
+                // Only extend nodes we've not already extended
+                if !extended_list.contains(&node_index) {
                     let mut new_path = path.clone();
                     new_path.push(node_index);
                     agenda.push(new_path);
@@ -254,12 +257,12 @@ mod tests {
             InputEdge {
                 weight: 10,
                 source: NodeIndex(6),
-                target: NodeIndex(7),
+                target: NodeIndex(4),
             },
             InputEdge {
                 weight: 10,
                 source: NodeIndex(6),
-                target: NodeIndex(4),
+                target: NodeIndex(7),
             },
         ];
         graphs.push(Graph::new(nodes, edges).expect("invalid test graph"));
