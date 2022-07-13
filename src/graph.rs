@@ -2,7 +2,7 @@
 
 use std::{
     collections::{BinaryHeap, HashMap, HashSet, VecDeque},
-    mem,
+    mem, cmp::Reverse,
 };
 
 #[derive(Debug)]
@@ -132,35 +132,34 @@ impl<T> Graph<T> {
         heuristic: HashMap<NodeIndex, usize>,
     ) -> Option<Vec<NodeIndex>> {
         let mut extended_list = HashSet::new();
-        let mut agenda = BinaryHeap::<WeightedPath>::new();
-        agenda.push(WeightedPath {
+        let mut agenda = BinaryHeap::new();
+        agenda.push(Reverse(WeightedPath {
             current_cost: 0,
             total_cost: *heuristic.get(&source).expect("missing heuristic value"),
             path: vec![source],
-        });
+        }));
 
         while let Some(weighted_path) = agenda.pop() {
-            let index = weighted_path.path[weighted_path.path.len() - 1];
+            let index = weighted_path.0.path[weighted_path.0.path.len() - 1];
             if index == target {
-                return Some(weighted_path.path);
+                return Some(weighted_path.0.path);
             }
 
             extended_list.insert(index);
-            println!("{:?}", weighted_path.path);
 
             for (node_index, cost) in self.successors(index) {
                 // Only extend nodes we've not already extended
                 if !extended_list.contains(&node_index) {
-                    let mut new_path = weighted_path.path.clone();
-                    let new_cost = weighted_path.current_cost + cost;
+                    let mut new_path = weighted_path.0.path.clone();
+                    let new_cost = weighted_path.0.current_cost + cost;
                     new_path.push(node_index);
 
-                    agenda.push(WeightedPath {
+                    agenda.push(Reverse(WeightedPath {
                         current_cost: new_cost,
                         total_cost: new_cost
                             + heuristic.get(&node_index).expect("missing heuristic value"),
                         path: new_path,
-                    })
+                    }))
                 }
             }
         }
@@ -325,61 +324,6 @@ mod tests {
             (NodeIndex(7), 0),
         ]);
         graphs.push((Graph::new(nodes, edges).expect("invalid test graph"), heuristic));
-
-        // let nodes = vec!["S", "A", "B", "C", "D", "E", "F", "G"];
-        // let edges = vec![
-        //     InputEdge {
-        //         weight: 10,
-        //         source: NodeIndex(0),
-        //         target: NodeIndex(2),
-        //     },
-        //     InputEdge {
-        //         weight: 10,
-        //         source: NodeIndex(0),
-        //         target: NodeIndex(1),
-        //     },
-        //     InputEdge {
-        //         weight: 10,
-        //         source: NodeIndex(2),
-        //         target: NodeIndex(3),
-        //     },
-        //     InputEdge {
-        //         weight: 10,
-        //         source: NodeIndex(2),
-        //         target: NodeIndex(1),
-        //     },
-        //     InputEdge {
-        //         weight: 10,
-        //         source: NodeIndex(1),
-        //         target: NodeIndex(4),
-        //     },
-        //     InputEdge {
-        //         weight: 10,
-        //         source: NodeIndex(4),
-        //         target: NodeIndex(5),
-        //     },
-        //     InputEdge {
-        //         weight: 10,
-        //         source: NodeIndex(4),
-        //         target: NodeIndex(7),
-        //     },
-        //     InputEdge {
-        //         weight: 10,
-        //         source: NodeIndex(5),
-        //         target: NodeIndex(6),
-        //     },
-        //     InputEdge {
-        //         weight: 10,
-        //         source: NodeIndex(6),
-        //         target: NodeIndex(4),
-        //     },
-        //     InputEdge {
-        //         weight: 10,
-        //         source: NodeIndex(6),
-        //         target: NodeIndex(7),
-        //     },
-        // ];
-        // graphs.push(Graph::new(nodes, edges).expect("invalid test graph"));
 
         graphs
     }
