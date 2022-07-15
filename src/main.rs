@@ -8,13 +8,13 @@ fn main() {
     let mut game = Game::new();
 
     game = game
-        .add_piece(0, Space::White)
-        .add_piece(0, Space::Black)
-        .add_piece(0, Space::White)
-        .add_piece(0, Space::Black)
-        .add_piece(6, Space::White)
-        .add_piece(6, Space::White)
-        .add_piece(6, Space::Black);
+        .add_piece(0)
+        .add_piece(0)
+        .add_piece(0)
+        .add_piece(0)
+        .add_piece(6)
+        .add_piece(6)
+        .add_piece(6);
 
     println!("{}", game);
 }
