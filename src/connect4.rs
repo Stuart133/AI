@@ -4,13 +4,6 @@ use std::fmt::Display;
 pub enum Space {
     White,
     Black,
-    Empty,
-}
-
-impl Default for Space {
-    fn default() -> Self {
-        Space::Empty
-    }
 }
 
 impl Display for Space {
@@ -18,13 +11,12 @@ impl Display for Space {
         match self {
             Space::White => write!(f, "x"),
             Space::Black => write!(f, "o"),
-            Space::Empty => write!(f, " "),
         }
     }
 }
 
 #[derive(Clone)]
-struct Row([Space; 7]);
+struct Row([Option<Space>; 7]);
 
 impl Default for Row {
     fn default() -> Self {
@@ -35,9 +27,14 @@ impl Default for Row {
 impl Display for Row {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for space in self.0.iter() {
-            match write!(f, "{} ", space) {
-                Ok(_) => {}
-                Err(e) => return Err(e),
+            let res = match space {
+                Some(s) => write!(f, "{} ", s),
+                None => write!(f, "  "),
+            };
+
+            match res {
+              Err(e) => return Err(e),
+              _ => {},
             }
         }
 
@@ -62,16 +59,16 @@ impl Game {
 
         for i in 0..new_board.board.len() {
             match new_board.board[i].0[column] {
-                Space::Empty => {} // Space is empty, keep going
-                _ => {
-                  new_board.board[i - 1].0[column] = color;
-                  return new_board
-                },
+                None => {} // Space is empty, keep going
+                Some(_) => {
+                    new_board.board[i - 1].0[column] = Some(color);
+                    return new_board;
+                }
             }
         }
 
         // Fill the bottom space
-        new_board.board[new_board.board.len()-1].0[column] = color;
+        new_board.board[new_board.board.len() - 1].0[column] = Some(color);
         new_board
     }
 }
