@@ -1,16 +1,11 @@
-use crate::algrebra::*;
+use crate::connect4::*;
 
 mod algrebra;
+pub mod connect4;
 pub mod graph;
 
 fn main() {
-    let expr = Expression::Sum(vec![
-        Expression::Sum(vec![
-            Expression::Variable(1, "a".to_string()),
-            Expression::Variable(1, "b".to_string()),
-        ]),
-        Expression::Variable(1, "c".to_string()),
-    ]);
+    let game = Game::new();
 
-    println!("{}", expr);
+    println!("{}", game);
 }

@@ -1,8 +1,9 @@
 //! A simple adjacency list based directed graph
 
 use std::{
+    cmp::Reverse,
     collections::{BinaryHeap, HashMap, HashSet, VecDeque},
-    mem, cmp::Reverse,
+    mem,
 };
 
 #[derive(Debug)]
@@ -323,7 +324,10 @@ mod tests {
             (NodeIndex(6), 9),
             (NodeIndex(7), 0),
         ]);
-        graphs.push((Graph::new(nodes, edges).expect("invalid test graph"), heuristic));
+        graphs.push((
+            Graph::new(nodes, edges).expect("invalid test graph"),
+            heuristic,
+        ));
 
         graphs
     }
