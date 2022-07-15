@@ -5,7 +5,16 @@ pub mod connect4;
 pub mod graph;
 
 fn main() {
-    let game = Game::new();
+    let mut game = Game::new();
+
+    game = game
+        .add_piece(0, Space::White)
+        .add_piece(0, Space::Black)
+        .add_piece(0, Space::White)
+        .add_piece(0, Space::Black)
+        .add_piece(6, Space::White)
+        .add_piece(6, Space::White)
+        .add_piece(6, Space::Black);
 
     println!("{}", game);
 }

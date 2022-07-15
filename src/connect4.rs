@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 pub enum Space {
     White,
     Black,
@@ -23,6 +23,7 @@ impl Display for Space {
     }
 }
 
+#[derive(Clone)]
 struct Row([Space; 7]);
 
 impl Default for Row {
@@ -34,7 +35,7 @@ impl Default for Row {
 impl Display for Row {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for space in self.0.iter() {
-            match write!(f, "{}", space) {
+            match write!(f, "{} ", space) {
                 Ok(_) => {}
                 Err(e) => return Err(e),
             }
@@ -44,7 +45,7 @@ impl Display for Row {
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Game {
     board: [Row; 6],
 }
@@ -55,6 +56,24 @@ impl Game {
             board: <[Row; 6]>::default(),
         }
     }
+
+    pub fn add_piece(&self, column: usize, color: Space) -> Self {
+        let mut new_board = self.clone();
+
+        for i in 0..new_board.board.len() {
+            match new_board.board[i].0[column] {
+                Space::Empty => {} // Space is empty, keep going
+                _ => {
+                  new_board.board[i - 1].0[column] = color;
+                  return new_board
+                },
+            }
+        }
+
+        // Fill the bottom space
+        new_board.board[new_board.board.len()-1].0[column] = color;
+        new_board
+    }
 }
 
 impl Display for Game {
@@ -63,9 +82,7 @@ impl Display for Game {
         let mut res = write!(f, "  0 1 2 3 4 5 6\n");
 
         for (i, line) in self.board.iter().enumerate() {
-          res = res.and_then(|_| {
-            write!(f, "{} {}\n", i, line)
-          });
+            res = res.and_then(|_| write!(f, "{} {}\n", i, line));
         }
 
         res
