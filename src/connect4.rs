@@ -70,10 +70,10 @@ impl<'a> Index<(usize, usize)> for Game {
     type Output = Option<Color>;
 
     fn index(&self, index: (usize, usize)) -> &Self::Output {
-        if index.0 >= self.board.len() || index.1 >= self.board[index.0].0.len() {
+        if index.1 >= self.board.len() || index.0 >= self.board[index.1].0.len() {
             &None
         } else {
-            &self.board[index.0][index.1]
+            &self.board[index.1][index.0]
         }
     }
 }
@@ -115,30 +115,64 @@ impl Game {
         false
     }
 
+    /// Get the longest chain of tokens matching the color in (x, y)
     fn get_longest_chain(&self, x: usize, y: usize) -> usize {
-        self.board[x][y];
+        let r = self.get_longest_vector(x, y, Direction::Up) + self.get_longest_vector(x, y, Direction::Down) + 1;
 
-        0
+        r
     }
 
-    fn get_longest_vector(&self, x: usize, y: usize, direction: (usize, usize)) -> usize {
-        let color = self.board[x][y].expect("no token in space");
+    /// Return the longest chain of tokens matching the color in (x, y) in the specified direction
+    fn get_longest_vector(&self, x: usize, y: usize, direction: Direction) -> usize {
+        let color = self[(x, y)].expect("no token in space");
 
-        let mut count = 1;
-        while let Some(inner) = self.board[x+(direction.0 * count)][y+(direction.1 * count)] {
+        let mut count = 0;
+        let (mut new_x, mut new_y) = direction.calculate_new_indices(x, y);
+
+        while let Some(inner) = self[(new_x, new_y)] {
             if inner != color {
                 break
-            }    
+            }
+
+            let new = direction.calculate_new_indices(new_x, new_y);
+            new_x = new.0;
+            new_y = new.1;
             
             count += 1;
         }
 
-        count - 1
+        count
     }
 
     // pub fn evaluate(&self) -> u64 {
 
     // }
+}
+
+impl Direction {
+    fn calculate_new_indices(&self, x: usize, y: usize) -> (usize, usize) {
+        match self {
+            Direction::Up => (x, y.wrapping_sub(1)),
+            Direction::UpLeft => (x.wrapping_sub(1), y.wrapping_sub(1)),
+            Direction::Left => (x.wrapping_sub(1), y),
+            Direction::DownLeft => (x.wrapping_sub(1), y),
+            Direction::Down => (x, y + 1),
+            Direction::DownRight => (x + 1, y + 1),
+            Direction::Right => (x + 1, y),
+            Direction::UpRight => (x + 1, y.wrapping_sub(1)),
+        }
+    }
+}
+
+enum Direction {
+    Up,
+    UpLeft,
+    Left,
+    DownLeft,
+    Down,
+    DownRight,
+    Right,
+    UpRight,
 }
 
 impl Display for Game {
@@ -151,5 +185,38 @@ impl Display for Game {
         }
 
         res
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::connect4::Direction;
+
+    use super::Game;
+
+    #[test]
+    pub fn get_longest_vector() {
+        let game = Game::new();
+
+        let game = game.add_piece(0)
+        .add_piece(1)
+        .add_piece(0)
+        .add_piece(1)
+        .add_piece(0)
+        .add_piece(1)
+        .add_piece(0);
+
+        println!("{}", game);
+
+        let longest = game.get_longest_vector(0, 5, Direction::Up);
+        assert_eq!(3, longest);
+
+        let longest = game.get_longest_vector(1, 3, Direction::Down);
+        assert_eq!(2, longest);
+    }
+
+    #[test]
+    pub fn get_longest_chain() {
+
     }
 }
