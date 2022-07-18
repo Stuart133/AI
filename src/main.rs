@@ -7,13 +7,14 @@ pub mod graph;
 fn main() {
     let mut game = Game::new();
 
-    game = game.add_piece(0)
-    .add_piece(1)
-    .add_piece(0)
-    .add_piece(1)
-    .add_piece(0)
-    .add_piece(1)
-    .add_piece(0);
+    game = game
+        .add_piece(0)
+        .add_piece(1)
+        .add_piece(0)
+        .add_piece(1)
+        .add_piece(0)
+        .add_piece(1)
+        .add_piece(0);
 
     println!("{}", game);
 }

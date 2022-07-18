@@ -1,4 +1,8 @@
-use std::{fmt::Display, ops::{Index, IndexMut}, cmp::max};
+use std::{
+    cmp::max,
+    fmt::Display,
+    ops::{Index, IndexMut},
+};
 
 const WIDTH: usize = 7;
 const HEIGHT: usize = 6;
@@ -50,8 +54,8 @@ impl Display for Row {
             };
 
             match res {
-              Err(e) => return Err(e),
-              _ => {},
+                Err(e) => return Err(e),
+                _ => {}
             }
         }
 
@@ -99,6 +103,7 @@ impl Game {
                 None => {} // Space is empty, keep going
                 Some(_) => {
                     new_board.board[i - 1][column] = Some(self.current_player);
+                    new_board.last_placement = (i - 1, column);
                     return new_board;
                 }
             }
@@ -106,21 +111,30 @@ impl Game {
 
         // Fill the bottom space
         new_board.board[new_board.board.len() - 1][column] = Some(self.current_player);
+        new_board.last_placement = (new_board.board.len() - 1, column);
         new_board
     }
 
     /// Returns true if the current player has won
     pub fn has_won(&self) -> bool {
         // We only need to check chains from the last space placed
-        false
+        self.get_longest_chain(self.last_placement.0, self.last_placement.1) >= 4
     }
 
     /// Get the longest chain of tokens matching the color in (x, y)
     fn get_longest_chain(&self, x: usize, y: usize) -> usize {
-        let ud = self.get_longest_vector(x, y, Direction::Up) + self.get_longest_vector(x, y, Direction::Down) + 1;
-        let lr = self.get_longest_vector(x, y, Direction::Left) + self.get_longest_vector(x, y, Direction::Right) + 1;
-        let urdl = self.get_longest_vector(x, y, Direction::UpRight) + self.get_longest_vector(x, y, Direction::DownLeft) + 1;
-        let uldr = self.get_longest_vector(x, y, Direction::UpLeft) + self.get_longest_vector(x, y, Direction::DownRight) + 1;
+        let ud = self.get_longest_vector(x, y, Direction::Up)
+            + self.get_longest_vector(x, y, Direction::Down)
+            + 1;
+        let lr = self.get_longest_vector(x, y, Direction::Left)
+            + self.get_longest_vector(x, y, Direction::Right)
+            + 1;
+        let urdl = self.get_longest_vector(x, y, Direction::UpRight)
+            + self.get_longest_vector(x, y, Direction::DownLeft)
+            + 1;
+        let uldr = self.get_longest_vector(x, y, Direction::UpLeft)
+            + self.get_longest_vector(x, y, Direction::DownRight)
+            + 1;
 
         max(ud, max(lr, max(urdl, uldr)))
     }
@@ -134,13 +148,13 @@ impl Game {
 
         while let Some(inner) = self[(new_x, new_y)] {
             if inner != color {
-                break
+                break;
             }
 
             let new = direction.calculate_new_indices(new_x, new_y);
             new_x = new.0;
             new_y = new.1;
-            
+
             count += 1;
         }
 
@@ -150,6 +164,30 @@ impl Game {
     // pub fn evaluate(&self) -> u64 {
 
     // }
+}
+
+impl Display for Game {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // Write the board header
+        let mut res = write!(f, "  0 1 2 3 4 5 6\n");
+
+        for (i, line) in self.board.iter().enumerate() {
+            res = res.and_then(|_| write!(f, "{} {}\n", i, line));
+        }
+
+        res
+    }
+}
+
+enum Direction {
+    Up,
+    UpLeft,
+    Left,
+    DownLeft,
+    Down,
+    DownRight,
+    Right,
+    UpRight,
 }
 
 impl Direction {
@@ -167,47 +205,24 @@ impl Direction {
     }
 }
 
-enum Direction {
-    Up,
-    UpLeft,
-    Left,
-    DownLeft,
-    Down,
-    DownRight,
-    Right,
-    UpRight,
-}
-
-impl Display for Game {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        // Write the board header
-        let mut res = write!(f, "  0 1 2 3 4 5 6\n");
-
-        for (i, line) in self.board.iter().enumerate() {
-            res = res.and_then(|_| write!(f, "{} {}\n", i, line));
-        }
-
-        res
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use crate::connect4::Direction;
 
-    use super::Game;
+    use super::{Color, Game, Row};
 
     #[test]
     pub fn get_longest_vector() {
         let game = Game::new();
 
-        let game = game.add_piece(0)
-        .add_piece(1)
-        .add_piece(0)
-        .add_piece(1)
-        .add_piece(0)
-        .add_piece(1)
-        .add_piece(0);
+        let game = game
+            .add_piece(0)
+            .add_piece(1)
+            .add_piece(0)
+            .add_piece(1)
+            .add_piece(0)
+            .add_piece(1)
+            .add_piece(0);
 
         let longest = game.get_longest_vector(0, 5, Direction::Up);
         assert_eq!(3, longest);
@@ -220,32 +235,54 @@ mod tests {
     pub fn get_longest_chain() {
         let game = Game::new();
 
-        let game = game.add_piece(0)
-        .add_piece(1)
-        .add_piece(0)
-        .add_piece(1)
-        .add_piece(1)
-        .add_piece(0)
-        .add_piece(2)
-        .add_piece(4)
-        .add_piece(2)
-        .add_piece(4)
-        .add_piece(3)
-        .add_piece(2)
-        .add_piece(3)
-        .add_piece(4)
-        .add_piece(3)
-        .add_piece(3)
-        .add_piece(2)
-        .add_piece(1)
-        .add_piece(4)
-        .add_piece(0);
-
+        let game = game
+            .add_piece(0)
+            .add_piece(1)
+            .add_piece(0)
+            .add_piece(1)
+            .add_piece(1)
+            .add_piece(0)
+            .add_piece(2)
+            .add_piece(4)
+            .add_piece(2)
+            .add_piece(4)
+            .add_piece(3)
+            .add_piece(2)
+            .add_piece(3)
+            .add_piece(4)
+            .add_piece(3)
+            .add_piece(3)
+            .add_piece(2)
+            .add_piece(1)
+            .add_piece(4)
+            .add_piece(0);
 
         let longest = game.get_longest_chain(3, 3);
         assert_eq!(3, longest);
 
         let longest = game.get_longest_chain(1, 2);
         assert_eq!(2, longest);
+    }
+
+    #[test]
+    #[rustfmt::skip]
+    pub fn has_won() {
+        let mut game = Game::new();
+
+        game.board = [Row([None; 7]), 
+            Row([Some(Color::Black), Some(Color::White), Some(Color::Black), None, None, None, None]),
+            Row([Some(Color::Black), Some(Color::White), Some(Color::Black), None, None, None, None]),
+            Row([Some(Color::Black), Some(Color::Black), Some(Color::White), None, None, None, None]),
+            Row([Some(Color::Black), Some(Color::Black), Some(Color::Black), Some(Color::White), None, None, None]),
+            Row([Some(Color::White), Some(Color::White), Some(Color::White), Some(Color::Black), Some(Color::White), None, None])];
+
+        game.last_placement = (0, 3);
+        assert!(game.has_won());
+
+        game.last_placement = (2, 3);
+        assert!(game.has_won());
+
+        game.last_placement = (1, 4);
+        assert!(!game.has_won());
     }
 }
