@@ -1,4 +1,4 @@
-use std::{fmt::Display, ops::{Index, IndexMut}};
+use std::{fmt::Display, ops::{Index, IndexMut}, cmp::max};
 
 const WIDTH: usize = 7;
 const HEIGHT: usize = 6;
@@ -117,9 +117,12 @@ impl Game {
 
     /// Get the longest chain of tokens matching the color in (x, y)
     fn get_longest_chain(&self, x: usize, y: usize) -> usize {
-        let r = self.get_longest_vector(x, y, Direction::Up) + self.get_longest_vector(x, y, Direction::Down) + 1;
+        let ud = self.get_longest_vector(x, y, Direction::Up) + self.get_longest_vector(x, y, Direction::Down) + 1;
+        let lr = self.get_longest_vector(x, y, Direction::Left) + self.get_longest_vector(x, y, Direction::Right) + 1;
+        let urdl = self.get_longest_vector(x, y, Direction::UpRight) + self.get_longest_vector(x, y, Direction::DownLeft) + 1;
+        let uldr = self.get_longest_vector(x, y, Direction::UpLeft) + self.get_longest_vector(x, y, Direction::DownRight) + 1;
 
-        r
+        max(ud, max(lr, max(urdl, uldr)))
     }
 
     /// Return the longest chain of tokens matching the color in (x, y) in the specified direction
@@ -206,8 +209,6 @@ mod tests {
         .add_piece(1)
         .add_piece(0);
 
-        println!("{}", game);
-
         let longest = game.get_longest_vector(0, 5, Direction::Up);
         assert_eq!(3, longest);
 
@@ -217,6 +218,34 @@ mod tests {
 
     #[test]
     pub fn get_longest_chain() {
+        let game = Game::new();
 
+        let game = game.add_piece(0)
+        .add_piece(1)
+        .add_piece(0)
+        .add_piece(1)
+        .add_piece(1)
+        .add_piece(0)
+        .add_piece(2)
+        .add_piece(4)
+        .add_piece(2)
+        .add_piece(4)
+        .add_piece(3)
+        .add_piece(2)
+        .add_piece(3)
+        .add_piece(4)
+        .add_piece(3)
+        .add_piece(3)
+        .add_piece(2)
+        .add_piece(1)
+        .add_piece(4)
+        .add_piece(0);
+
+
+        let longest = game.get_longest_chain(3, 3);
+        assert_eq!(3, longest);
+
+        let longest = game.get_longest_chain(1, 2);
+        assert_eq!(2, longest);
     }
 }
