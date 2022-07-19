@@ -122,10 +122,12 @@ impl Game {
         new_board
     }
 
-    pub fn evaluate(&self) -> u64 {
+    pub fn evaluate(&self) -> i64 {
         if self.has_won() {
             return 1000;
         }
+
+        // TODO: More evaluation
 
         0
     }
@@ -212,10 +214,10 @@ impl<'a> Iterator for MoveIterator<'a> {
         if self.current >= WIDTH {
             None
         } else {
-            let game = self.root_game.add_piece(self.current);        
+            let game = self.root_game.add_piece(self.current);
             self.current += 1;
-    
-            Some((self.current - 1, game))    
+
+            Some((self.current - 1, game))
         }
     }
 }
