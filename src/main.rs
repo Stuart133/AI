@@ -1,7 +1,8 @@
 use crate::connect4::*;
 
-mod algrebra;
+pub mod algrebra;
 pub mod connect4;
+pub mod game;
 pub mod graph;
 
 fn main() {

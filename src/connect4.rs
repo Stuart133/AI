@@ -82,12 +82,39 @@ impl<'a> Index<(usize, usize)> for Game {
     }
 }
 
+pub struct MoveIterator<'a> {
+    root_game: &'a Game,
+    current: usize,
+}
+
+impl<'a> Iterator for MoveIterator<'a> {
+    type Item = (usize, Game);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.current >= WIDTH {
+            None
+        } else {
+            let game = self.root_game.add_piece(self.current);        
+            self.current += 1;
+    
+            Some((self.current - 1, game))    
+        }
+    }
+}
+
 impl Game {
     pub fn new() -> Self {
         Game {
-            board: <[Row; 6]>::default(),
+            board: <[Row; HEIGHT]>::default(),
             current_player: Color::White,
             last_placement: (0, 0),
+        }
+    }
+
+    pub fn get_moves(&self) -> MoveIterator {
+        MoveIterator {
+            current: 0,
+            root_game: self,
         }
     }
 
@@ -115,7 +142,25 @@ impl Game {
         new_board
     }
 
-    /// Returns true if the current player has won
+    pub fn evaluate(&self) -> u64 {
+        if self.has_won() {
+            return 1000;
+        }
+
+        0
+    }
+
+    pub fn has_finished(&self) -> bool {
+        self.has_won() && self.has_tied()
+    }
+
+    /// Returns true if every space is full
+    pub fn has_tied(&self) -> bool {
+        // We can just check the top row as that implies the rest of the column is full
+        !self.board[0].0.contains(&None)
+    }
+
+    /// Returns true if the last piece played won
     pub fn has_won(&self) -> bool {
         // We only need to check chains from the last space placed
         self.get_longest_chain(self.last_placement.0, self.last_placement.1) >= 4
@@ -160,10 +205,6 @@ impl Game {
 
         count
     }
-
-    // pub fn evaluate(&self) -> u64 {
-
-    // }
 }
 
 impl Display for Game {
