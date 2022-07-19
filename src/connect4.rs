@@ -351,6 +351,13 @@ mod tests {
             } else {
                 assert_eq!(game.last_placement, (new_move, 5));
             }
+
+            // Go one level deeper to test black win finding
+            if new_move == 1 {
+                for (new_move, game) in game.get_moves() {
+                    assert_eq!(new_move == 0, game.has_won());
+                }
+            }
         }
     }
 }
