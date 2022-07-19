@@ -82,26 +82,6 @@ impl<'a> Index<(usize, usize)> for Game {
     }
 }
 
-pub struct MoveIterator<'a> {
-    root_game: &'a Game,
-    current: usize,
-}
-
-impl<'a> Iterator for MoveIterator<'a> {
-    type Item = (usize, Game);
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.current >= WIDTH {
-            None
-        } else {
-            let game = self.root_game.add_piece(self.current);        
-            self.current += 1;
-    
-            Some((self.current - 1, game))    
-        }
-    }
-}
-
 impl Game {
     pub fn new() -> Self {
         Game {
@@ -130,7 +110,7 @@ impl Game {
                 None => {} // Space is empty, keep going
                 Some(_) => {
                     new_board.board[i - 1][column] = Some(self.current_player);
-                    new_board.last_placement = (i - 1, column);
+                    new_board.last_placement = (column, i - 1);
                     return new_board;
                 }
             }
@@ -138,7 +118,7 @@ impl Game {
 
         // Fill the bottom space
         new_board.board[new_board.board.len() - 1][column] = Some(self.current_player);
-        new_board.last_placement = (new_board.board.len() - 1, column);
+        new_board.last_placement = (column, new_board.board.len() - 1);
         new_board
     }
 
@@ -217,6 +197,26 @@ impl Display for Game {
         }
 
         res
+    }
+}
+
+pub struct MoveIterator<'a> {
+    root_game: &'a Game,
+    current: usize,
+}
+
+impl<'a> Iterator for MoveIterator<'a> {
+    type Item = (usize, Game);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.current >= WIDTH {
+            None
+        } else {
+            let game = self.root_game.add_piece(self.current);        
+            self.current += 1;
+    
+            Some((self.current - 1, game))    
+        }
     }
 }
 
@@ -325,5 +325,32 @@ mod tests {
 
         game.last_placement = (1, 4);
         assert!(!game.has_won());
+    }
+
+    #[test]
+    #[rustfmt::skip]
+    pub fn move_iterator() {
+        let mut game = Game::new();
+
+        game.board = [Row([None; 7]), 
+            Row([None; 7]),
+            Row([None; 7]),
+            Row([Some(Color::Black), Some(Color::Black), Some(Color::White), None, None, None, None]),
+            Row([Some(Color::Black), Some(Color::Black), Some(Color::Black), Some(Color::White), None, None, None]),
+            Row([Some(Color::White), Some(Color::White), Some(Color::White), Some(Color::Black), Some(Color::White), None, None])];
+
+        for (new_move, game) in game.get_moves() {
+            assert_eq!(new_move == 1, game.has_won());
+
+            if new_move < 3 {
+                assert_eq!(game.last_placement, (new_move, 2));
+            } else if new_move == 3 {
+                assert_eq!(game.last_placement, (new_move, 3));
+            } else if new_move == 4 {
+                assert_eq!(game.last_placement, (new_move, 4));
+            } else {
+                assert_eq!(game.last_placement, (new_move, 5));
+            }
+        }
     }
 }
