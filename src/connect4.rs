@@ -92,13 +92,25 @@ impl MinimaxGame<MoveIterator> for Game {
             return -1000;
         }
 
-        let score = (self.current_longest * 10) as i64;
+        let mut score = (self.current_longest * 10) as i64;
+
+        // Prefer our tokens in the center and opponent tokens on the edges
+        for row in self.board.iter() {
+            for (column, _) in row.0.iter().enumerate() {
+                let delta = 3 - (column as i64);
+                if row[column] == Some(self.current_player) {     
+                    score -= delta.abs();
+                } else if let Some(_) = row[column] {
+                    score += delta.abs();
+                }
+            }
+        }
 
         score
     }
 
     fn has_finished(&self) -> bool {
-        self.has_won() && self.has_tied()
+        self.has_won() || self.has_tied()
     }
 
     fn get_moves(self) -> MoveIterator {
@@ -261,7 +273,7 @@ impl Direction {
             Direction::Up => (x, y.wrapping_sub(1)),
             Direction::UpLeft => (x.wrapping_sub(1), y.wrapping_sub(1)),
             Direction::Left => (x.wrapping_sub(1), y),
-            Direction::DownLeft => (x.wrapping_sub(1), y),
+            Direction::DownLeft => (x.wrapping_sub(1), y + 1),
             Direction::Down => (x, y + 1),
             Direction::DownRight => (x + 1, y + 1),
             Direction::Right => (x + 1, y),
