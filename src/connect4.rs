@@ -70,6 +70,8 @@ pub struct Game {
     board: [Row; HEIGHT],
     current_player: Color,
     last_placement: (usize, usize),
+    current_longest: usize,
+    opponent_longest: usize,
 }
 
 impl<'a> Index<(usize, usize)> for Game {
@@ -90,9 +92,9 @@ impl MinimaxGame<MoveIterator> for Game {
             return -1000;
         }
 
-        // TODO: More evaluation
+        let score = (self.current_longest * 10) as i64;
 
-        0
+        score
     }
 
     fn has_finished(&self) -> bool {
@@ -100,7 +102,10 @@ impl MinimaxGame<MoveIterator> for Game {
     }
 
     fn get_moves(self) -> MoveIterator {
-        self.get_moves()
+        MoveIterator {
+            current: 0,
+            root_game: self,
+        }
     }
 }
 
@@ -110,13 +115,8 @@ impl Game {
             board: <[Row; HEIGHT]>::default(),
             current_player: Color::White,
             last_placement: (0, 0),
-        }
-    }
-
-    pub fn get_moves(self) -> MoveIterator {
-        MoveIterator {
-            current: 0,
-            root_game: self,
+            current_longest: 0,
+            opponent_longest: 0,
         }
     }
 
@@ -128,11 +128,12 @@ impl Game {
         };
 
         for i in 0..new_board.board.len() {
-            match new_board.board[i][column] {
-                None => {} // Space is empty, keep going
+            match new_board[(column, i)] {
+                None => {             } // Space is empty, keep going
                 Some(_) => {
                     new_board.board[i - 1][column] = Some(self.current_player);
                     new_board.last_placement = (column, i - 1);
+                    new_board.set_longest_chains(column, i - 1);
                     return new_board;
                 }
             }
@@ -141,7 +142,15 @@ impl Game {
         // Fill the bottom space
         new_board.board[new_board.board.len() - 1][column] = Some(self.current_player);
         new_board.last_placement = (column, new_board.board.len() - 1);
+        new_board.set_longest_chains(column, new_board.board.len() - 1);
         new_board
+    }
+
+    fn set_longest_chains(&mut self, x: usize, y: usize) {
+        let tmp = self.current_longest;
+        self.current_longest = self.opponent_longest;
+        self.opponent_longest = max(tmp, self.get_longest_chain(x, y));
+
     }
 
     /// Returns true if every space is full
@@ -219,6 +228,11 @@ impl Iterator for MoveIterator {
     type Item = (usize, Game);
 
     fn next(&mut self) -> Option<Self::Item> {
+        // Skip full columns
+        while let Some(_) = self.root_game[(self.current, 0)] {
+            self.current += 1;
+        }
+
         if self.current >= WIDTH {
             None
         } else {
@@ -258,15 +272,41 @@ impl Direction {
 
 #[cfg(test)]
 mod tests {
-    use crate::connect4::Direction;
+    use crate::{connect4::Direction, game::MinimaxGame};
 
     use super::{Color, Game, Row};
 
     #[test]
-    pub fn get_longest_vector() {
-        let game = Game::new();
+    pub fn longest_chains_set_correctly() {
+        let game = Game::new()
+        .add_piece(0)
+        .add_piece(1)
+        .add_piece(0)
+        .add_piece(1)
+        .add_piece(1)
+        .add_piece(0)
+        .add_piece(2)
+        .add_piece(4)
+        .add_piece(2)
+        .add_piece(4)
+        .add_piece(3)
+        .add_piece(2)
+        .add_piece(3)
+        .add_piece(5)
+        .add_piece(3)
+        .add_piece(3)
+        .add_piece(2)
+        .add_piece(1)
+        .add_piece(4)
+        .add_piece(0);
 
-        let game = game
+        assert_eq!(game.current_longest, 3);
+        assert_eq!(game.opponent_longest, 2);
+    }
+
+    #[test]
+    pub fn get_longest_vector() {
+        let game = Game::new()
             .add_piece(0)
             .add_piece(1)
             .add_piece(0)
@@ -284,9 +324,7 @@ mod tests {
 
     #[test]
     pub fn get_longest_chain() {
-        let game = Game::new();
-
-        let game = game
+        let game = Game::new()
             .add_piece(0)
             .add_piece(1)
             .add_piece(0)

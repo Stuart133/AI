@@ -1,4 +1,4 @@
-use crate::connect4::*;
+use crate::{connect4::*, game::minimax};
 
 pub mod algrebra;
 pub mod connect4;
@@ -8,14 +8,7 @@ pub mod graph;
 fn main() {
     let mut game = Game::new();
 
-    game = game
-        .add_piece(0)
-        .add_piece(1)
-        .add_piece(0)
-        .add_piece(1)
-        .add_piece(0)
-        .add_piece(1)
-        .add_piece(0);
+    let m = minimax(game.clone(), 5);
 
-    println!("{}", game);
+    println!("{}", m);
 }
