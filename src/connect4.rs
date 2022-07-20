@@ -306,11 +306,13 @@ mod tests {
         .add_piece(3)
         .add_piece(5)
         .add_piece(3)
-        .add_piece(3)
+        .add_piece(5)
         .add_piece(2)
         .add_piece(1)
         .add_piece(4)
         .add_piece(0);
+
+        println!("{}", game);
 
         assert_eq!(game.current_longest, 3);
         assert_eq!(game.opponent_longest, 2);

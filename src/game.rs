@@ -4,7 +4,7 @@ pub trait MinimaxGame<T: Iterator<Item = (usize, Self)>> {
     fn get_moves(self) -> T;
 }
 
-// TODO: Use trait to make this generic
+/// Returns the best move, searching as far as depth
 pub fn minimax<T: MinimaxGame<I>, I: Iterator<Item = (usize, T)>>(game: T, depth: usize) -> usize {
     let new_move = game
         .get_moves()
