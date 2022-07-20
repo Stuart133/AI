@@ -124,7 +124,7 @@ impl Game {
 
     pub fn evaluate(&self) -> i64 {
         if self.has_won() {
-            return 1000;
+            return -1000;
         }
 
         // TODO: More evaluation
