@@ -4,6 +4,8 @@ use std::{
     ops::{Index, IndexMut},
 };
 
+use crate::game::MinimaxGame;
+
 const WIDTH: usize = 7;
 const HEIGHT: usize = 6;
 
@@ -82,6 +84,26 @@ impl<'a> Index<(usize, usize)> for Game {
     }
 }
 
+impl MinimaxGame<MoveIterator> for Game {
+    fn evaluate(&self, _: usize) -> i64 {
+        if self.has_won() {
+            return -1000;
+        }
+
+        // TODO: More evaluation
+
+        0
+    }
+
+    fn has_finished(&self) -> bool {
+        self.has_won() && self.has_tied()
+    }
+
+    fn get_moves(self) -> MoveIterator {
+        self.get_moves()
+    }
+}
+
 impl Game {
     pub fn new() -> Self {
         Game {
@@ -91,7 +113,7 @@ impl Game {
         }
     }
 
-    pub fn get_moves(&self) -> MoveIterator {
+    pub fn get_moves(self) -> MoveIterator {
         MoveIterator {
             current: 0,
             root_game: self,
@@ -120,20 +142,6 @@ impl Game {
         new_board.board[new_board.board.len() - 1][column] = Some(self.current_player);
         new_board.last_placement = (column, new_board.board.len() - 1);
         new_board
-    }
-
-    pub fn evaluate(&self) -> i64 {
-        if self.has_won() {
-            return -1000;
-        }
-
-        // TODO: More evaluation
-
-        0
-    }
-
-    pub fn has_finished(&self) -> bool {
-        self.has_won() && self.has_tied()
     }
 
     /// Returns true if every space is full
@@ -202,12 +210,12 @@ impl Display for Game {
     }
 }
 
-pub struct MoveIterator<'a> {
-    root_game: &'a Game,
+pub struct MoveIterator {
+    root_game: Game,
     current: usize,
 }
 
-impl<'a> Iterator for MoveIterator<'a> {
+impl Iterator for MoveIterator {
     type Item = (usize, Game);
 
     fn next(&mut self) -> Option<Self::Item> {

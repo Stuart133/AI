@@ -1,14 +1,14 @@
 pub trait MinimaxGame<T: Iterator<Item = (usize, Self)>> {
     fn evaluate(&self, depth: usize) -> i64;
     fn has_finished(&self) -> bool;
-    fn get_moves(&self) -> T;
+    fn get_moves(self) -> T;
 }
 
 // TODO: Use trait to make this generic
-pub fn minimax<T: MinimaxGame<I>, I: Iterator<Item = (usize, T)>>(game: &T, depth: usize) -> usize {
+pub fn minimax<T: MinimaxGame<I>, I: Iterator<Item = (usize, T)>>(game: T, depth: usize) -> usize {
     let new_move = game
         .get_moves()
-        .map(|(new_move, game)| (new_move, -1 * minimax_value(&game, depth - 1)))
+        .map(|(new_move, game)| (new_move, -1 * minimax_value(game, depth - 1)))
         .reduce(|acc, (new_move, value)| {
             if acc.1 < value {
                 (new_move, value)
@@ -22,13 +22,13 @@ pub fn minimax<T: MinimaxGame<I>, I: Iterator<Item = (usize, T)>>(game: &T, dept
 }
 
 /// Returns the minimax value from the current node, searching as far as depth
-fn minimax_value<T: MinimaxGame<I>, I: Iterator<Item = (usize, T)>>(game: &T, depth: usize) -> i64 {
+fn minimax_value<T: MinimaxGame<I>, I: Iterator<Item = (usize, T)>>(game: T, depth: usize) -> i64 {
     if depth <= 0 || game.has_finished() {
         return game.evaluate(depth);
     }
 
     game.get_moves()
-        .map(|(_, game)| -1 * minimax_value(&game, depth - 1))
+        .map(|(_, game)| -1 * minimax_value(game, depth - 1))
         .max()
         .expect("tried to expand game node with no more moves")
 }
@@ -76,7 +76,7 @@ mod tests {
         }
     }
 
-    impl<'a> MinimaxGame<TreeIter> for Tree {
+    impl MinimaxGame<TreeIter> for Tree {
         fn evaluate(&self, _: usize) -> i64 {
             match self.links[self.root] {
                 Node::Leaf(val) => val,
@@ -91,7 +91,7 @@ mod tests {
             }
         }
 
-        fn get_moves(&self) -> TreeIter {
+        fn get_moves(self) -> TreeIter {
             match self.links[self.root] {
                 Node::Leaf(_) => panic!("shouldn't get here"),
                 Node::Node(left, right) => TreeIter {
@@ -192,7 +192,7 @@ mod tests {
     #[test]
     pub fn tree_minimax_value() {
         for data in get_test_data() {
-            let value = minimax_value(&data.tree, 10);
+            let value = minimax_value(data.tree, 10);
 
             assert_eq!(value, data.minimax_value);
         }
@@ -201,43 +201,9 @@ mod tests {
     #[test]
     pub fn tree_minimax() {
       for data in get_test_data() {
-        let next_move = minimax(&data.tree, 10);
+        let next_move = minimax(data.tree, 10);
         
         assert_eq!(next_move, data.next_move);
       }
     }
 }
-
-// tup_tree = ("A", None,
-// ("B", None,
-//  ("E", None,
-//   ("K", 8),
-//   ("L", 2)),
-//  ("F", 6)
-//  ),
-// ("C", None,
-//  ("G", None,
-//   ("M", None,
-//    ("S", 4),
-//    ("T", 5)),
-//   ("N", 3)),
-//  ("H", None,
-//   ("O", 9),
-//   ("P", None,
-//    ("U", 10),
-//    ("V", 8))
-//   ),
-//  ),
-// ("D", None,
-//  ("I", 1),
-//  ("J", None,
-//   ("Q", None,
-//    ("W", 7),
-//    ("X", 12)),
-//   ("K", None,
-//    ("Y", 11),
-//    ("Z", 15)
-//    ),
-//   )
-//  )
-// )
