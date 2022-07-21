@@ -1,4 +1,4 @@
-use nqueens::Queens;
+use crate::nqueens::solve;
 
 pub mod algrebra;
 pub mod connect4;
@@ -7,8 +7,9 @@ pub mod graph;
 pub mod nqueens;
 
 fn main() {
-    let queens = Queens::<4>::new()
-        .place_queen(0, 0).expect("oops");
+    let solutions = solve::<6>();
 
-    println!("{}", queens);
+    for solution in solutions {
+        println!("{}", solution);
+    }
 }
