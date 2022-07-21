@@ -7,9 +7,7 @@ pub mod graph;
 pub mod nqueens;
 
 fn main() {
-    let solutions = solve::<6>();
+    let solutions = solve::<14>();
 
-    for solution in solutions {
-        println!("{}", solution);
-    }
+    println!("{}", solutions.len());
 }

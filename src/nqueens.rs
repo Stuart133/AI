@@ -2,18 +2,18 @@ use std::fmt::Display;
 
 pub fn solve<const N: usize>() -> Vec<Queens<N>> {
   let queen = Queens::<N>::new();
-  solve_internal(N, queen)
+  solve_internal(N - 1, queen)
 }
 
-fn solve_internal<const N: usize>(remaining: usize, root: Queens<N>) -> Vec<Queens<N>> {
+fn solve_internal<const N: usize>(row: usize, root: Queens<N>) -> Vec<Queens<N>> {
   let mut solutions = vec![];
 
-  if remaining == 1 {
-    return root.get_safe_moves();
+  if row == 0 {
+    return root.get_safe_moves(row);
   }
 
-  for next in root.get_safe_moves() {
-    solutions.append(&mut solve_internal(remaining - 1, next));
+  for next in root.get_safe_moves(row) {
+    solutions.append(&mut solve_internal(row - 1, next));
   }
 
   solutions
@@ -31,18 +31,16 @@ impl<const N: usize> Queens<N> {
         }
     }
 
-    fn get_safe_moves(&self) -> Vec<Queens<N>> {
-        let mut queens = vec![];
+    fn get_safe_moves(&self, y: usize) -> Vec<Queens<N>> {
+      let mut queens = vec![];
 
-        for x in 0..N {
-            for y in 0..N {
-                if self.safe_place(x, y) {
-                    queens.push(self.place_queen(x, y).expect("oops"));
-                }
-            }
+      for x in 0..N {
+        if self.safe_place(x, y) {
+          queens.push(self.place_queen(x, y).expect("oops"));
         }
+      }
 
-        queens
+      queens
     }
 
     fn safe_place(&self, x: usize, y: usize) -> bool {
@@ -141,10 +139,13 @@ mod tests {
             .place_queen(3, 1)
             .unwrap();
 
-        let moves = queens.get_safe_moves();
+        let moves = queens.get_safe_moves(2);
 
-        assert_eq!(moves.len(), 2);
+        assert_eq!(moves.len(), 1);
         assert!(moves[0].board[2][1]);
-        assert!(moves[1].board[3][2]);
+
+        let moves = queens.get_safe_moves(3);
+        assert_eq!(moves.len(), 1);
+        assert!(moves[0].board[3][2]);
     }
 }
