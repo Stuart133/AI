@@ -1,3 +1,5 @@
+use std::cmp::max;
+
 pub trait MinimaxGame<T: Iterator<Item = (usize, Self)>> {
     fn evaluate(&self, depth: usize) -> i64;
     fn has_finished(&self) -> bool;
@@ -33,9 +35,47 @@ fn minimax_value<T: MinimaxGame<I>, I: Iterator<Item = (usize, T)>>(game: T, dep
         .expect("tried to expand game node with no more moves")
 }
 
+/// Returns the best move using alpha beta pruning, searching as far as depth
+pub fn alpha_beta<T: MinimaxGame<I>, I: Iterator<Item = (usize, T)>>(game: T, depth: usize) -> usize {
+    let new_move = game
+        .get_moves()
+        .map(|(new_move, game)| (new_move, -1 * alpha_beta_value(game, depth - 1, i64::min_value() + 1, i64::max_value())))
+        .reduce(|acc, (new_move, value)| {
+            if acc.1 < value {
+                (new_move, value)
+            } else {
+                acc
+            }
+        })
+        .expect("could not find move");
+
+    new_move.0
+}
+
+/// Returns the minimax value from the current node using alpha beta pruning, searching as far as depth
+fn alpha_beta_value<T: MinimaxGame<I>, I: Iterator<Item = (usize, T)>>(game: T, depth: usize, mut alpha: i64, beta: i64) -> i64 {
+    if depth <= 0 || game.has_finished() {
+        return game.evaluate(depth);
+    }
+
+    for (_, game) in game.get_moves() {
+        // Swap and negate alpha & beta so next level maximises correctly
+        let val = -1 * alpha_beta_value(game, depth, -beta, -alpha);
+
+        alpha = max(alpha, val);
+        if alpha > beta {
+            break
+        }
+    }
+
+    alpha
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{minimax_value, MinimaxGame, minimax};
+    use crate::game::{alpha_beta, alpha_beta_value};
+
+    use super::*;
 
     #[derive(Clone)]
     struct Tree {
@@ -202,6 +242,24 @@ mod tests {
     pub fn tree_minimax() {
       for data in get_test_data() {
         let next_move = minimax(data.tree, 10);
+        
+        assert_eq!(next_move, data.next_move);
+      }
+    }
+
+    #[test]
+    pub fn tree_alphabeta_value() {
+        for data in get_test_data() {
+            let value = alpha_beta_value(data.tree, 10, i64::min_value() + 1, i64::max_value());
+
+            assert_eq!(value, data.minimax_value);
+        }
+    }
+
+    #[test]
+    pub fn tree_alphabeta() {
+      for data in get_test_data() {
+        let next_move = alpha_beta(data.tree, 10);
         
         assert_eq!(next_move, data.next_move);
       }
