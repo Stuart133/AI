@@ -48,7 +48,6 @@ pub fn alpha_beta<T: MinimaxGame<I>, I: Iterator<Item = (usize, T)>>(game: T, de
             }
         })
         .expect("could not find move");
-
     new_move.0
 }
 
@@ -60,7 +59,7 @@ fn alpha_beta_value<T: MinimaxGame<I>, I: Iterator<Item = (usize, T)>>(game: T, 
 
     for (_, game) in game.get_moves() {
         // Swap and negate alpha & beta so next level maximises correctly
-        let val = -1 * alpha_beta_value(game, depth, -beta, -alpha);
+        let val = -1 * alpha_beta_value(game, depth - 1, -beta, -alpha);
 
         alpha = max(alpha, val);
         if alpha > beta {
@@ -118,6 +117,7 @@ mod tests {
 
     impl MinimaxGame<TreeIter> for Tree {
         fn evaluate(&self, _: usize) -> i64 {
+            println!("OH YEAH");
             match self.links[self.root] {
                 Node::Leaf(val) => val,
                 Node::Node(_, _) => panic!("shouldn't get here"),
