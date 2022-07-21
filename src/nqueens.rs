@@ -12,9 +12,19 @@ impl<const N: usize> Queens<N> {
     }
   }
 
-  // fn get_safe_moves() -> Vec<Queens<N>> {
+   fn get_safe_moves(&self) -> Vec<Queens<N>> {
+    let mut queens = vec![];
 
-  // }
+    for x in 0..N {
+      for y in 0..N {
+        if self.safe_place(x, y) {
+          queens.push(self.place_queen(x, y).expect("oops"));
+        }
+      }
+    }
+
+    queens
+   }
 
   fn safe_place(&self, x: usize, y: usize) -> bool {   
     for i in 0..3 {
@@ -101,5 +111,18 @@ mod tests {
     assert!(!queens.safe_place(2, 1));
 
     assert!(queens.safe_place(1, 3));
+  }
+
+  #[test]
+  pub fn get_safe_moves() {
+    let queens = Queens::<4>::new()
+    .place_queen(0, 0).unwrap()
+    .place_queen(3, 1).unwrap();
+
+    let moves = queens.get_safe_moves();
+
+    assert_eq!(moves.len(), 2);
+    assert!(moves[0].board[2][1]);
+    assert!(moves[1].board[3][2]);
   }
 }
