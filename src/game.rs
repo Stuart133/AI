@@ -36,10 +36,18 @@ fn minimax_value<T: MinimaxGame<I>, I: Iterator<Item = (usize, T)>>(game: T, dep
 }
 
 /// Returns the best move using alpha beta pruning, searching as far as depth
-pub fn alpha_beta<T: MinimaxGame<I>, I: Iterator<Item = (usize, T)>>(game: T, depth: usize) -> usize {
+pub fn alpha_beta<T: MinimaxGame<I>, I: Iterator<Item = (usize, T)>>(
+    game: T,
+    depth: usize,
+) -> usize {
     let new_move = game
         .get_moves()
-        .map(|(new_move, game)| (new_move, -1 * alpha_beta_value(game, depth - 1, i64::min_value() + 1, i64::max_value())))
+        .map(|(new_move, game)| {
+            (
+                new_move,
+                -1 * alpha_beta_value(game, depth - 1, i64::min_value() + 1, i64::max_value()),
+            )
+        })
         .reduce(|acc, (new_move, value)| {
             if acc.1 < value {
                 (new_move, value)
@@ -52,7 +60,12 @@ pub fn alpha_beta<T: MinimaxGame<I>, I: Iterator<Item = (usize, T)>>(game: T, de
 }
 
 /// Returns the minimax value from the current node using alpha beta pruning, searching as far as depth
-fn alpha_beta_value<T: MinimaxGame<I>, I: Iterator<Item = (usize, T)>>(game: T, depth: usize, mut alpha: i64, beta: i64) -> i64 {
+fn alpha_beta_value<T: MinimaxGame<I>, I: Iterator<Item = (usize, T)>>(
+    game: T,
+    depth: usize,
+    mut alpha: i64,
+    beta: i64,
+) -> i64 {
     if depth <= 0 || game.has_finished() {
         return game.evaluate(depth);
     }
@@ -63,7 +76,7 @@ fn alpha_beta_value<T: MinimaxGame<I>, I: Iterator<Item = (usize, T)>>(game: T, 
 
         alpha = max(alpha, val);
         if alpha > beta {
-            break
+            break;
         }
     }
 
@@ -225,7 +238,7 @@ mod tests {
                 },
                 minimax_value: 7,
                 next_move: 0,
-            }
+            },
         ]
     }
 
@@ -240,11 +253,11 @@ mod tests {
 
     #[test]
     pub fn tree_minimax() {
-      for data in get_test_data() {
-        let next_move = minimax(data.tree, 10);
-        
-        assert_eq!(next_move, data.next_move);
-      }
+        for data in get_test_data() {
+            let next_move = minimax(data.tree, 10);
+
+            assert_eq!(next_move, data.next_move);
+        }
     }
 
     #[test]
@@ -258,10 +271,10 @@ mod tests {
 
     #[test]
     pub fn tree_alphabeta() {
-      for data in get_test_data() {
-        let next_move = alpha_beta(data.tree, 10);
-        
-        assert_eq!(next_move, data.next_move);
-      }
+        for data in get_test_data() {
+            let next_move = alpha_beta(data.tree, 10);
+
+            assert_eq!(next_move, data.next_move);
+        }
     }
 }

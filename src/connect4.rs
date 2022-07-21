@@ -89,7 +89,7 @@ impl<'a> Index<(usize, usize)> for Game {
 impl MinimaxGame<MoveIterator> for Game {
     fn evaluate(&self, depth: usize) -> i64 {
         if self.has_won() {
-            return -1000 * depth as i64;    // Prefer earlier victories
+            return -1000 * depth as i64; // Prefer earlier victories
         }
 
         let mut score = (self.current_longest * 10) as i64;
@@ -98,7 +98,7 @@ impl MinimaxGame<MoveIterator> for Game {
         for row in self.board.iter() {
             for (column, _) in row.0.iter().enumerate() {
                 let delta = 3 - (column as i64);
-                if row[column] == Some(self.current_player) {     
+                if row[column] == Some(self.current_player) {
                     score -= delta.abs();
                 } else if let Some(_) = row[column] {
                     score += delta.abs();
@@ -141,7 +141,7 @@ impl Game {
 
         for i in 0..new_board.board.len() {
             match new_board[(column, i)] {
-                None => {             } // Space is empty, keep going
+                None => {} // Space is empty, keep going
                 Some(_) => {
                     new_board.board[i - 1][column] = Some(self.current_player);
                     new_board.last_placement = (column, i - 1);
@@ -162,7 +162,6 @@ impl Game {
         let tmp = self.current_longest;
         self.current_longest = self.opponent_longest;
         self.opponent_longest = max(tmp, self.get_longest_chain(x, y));
-
     }
 
     /// Returns true if every space is full
@@ -291,26 +290,26 @@ mod tests {
     #[test]
     pub fn longest_chains_set_correctly() {
         let game = Game::new()
-        .add_piece(0)
-        .add_piece(1)
-        .add_piece(0)
-        .add_piece(1)
-        .add_piece(1)
-        .add_piece(0)
-        .add_piece(2)
-        .add_piece(4)
-        .add_piece(2)
-        .add_piece(4)
-        .add_piece(3)
-        .add_piece(2)
-        .add_piece(3)
-        .add_piece(5)
-        .add_piece(3)
-        .add_piece(5)
-        .add_piece(2)
-        .add_piece(1)
-        .add_piece(4)
-        .add_piece(0);
+            .add_piece(0)
+            .add_piece(1)
+            .add_piece(0)
+            .add_piece(1)
+            .add_piece(1)
+            .add_piece(0)
+            .add_piece(2)
+            .add_piece(4)
+            .add_piece(2)
+            .add_piece(4)
+            .add_piece(3)
+            .add_piece(2)
+            .add_piece(3)
+            .add_piece(5)
+            .add_piece(3)
+            .add_piece(5)
+            .add_piece(2)
+            .add_piece(1)
+            .add_piece(4)
+            .add_piece(0);
 
         assert_eq!(game.current_longest, 3);
         assert_eq!(game.opponent_longest, 2);
