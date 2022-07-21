@@ -130,7 +130,6 @@ mod tests {
 
     impl MinimaxGame<TreeIter> for Tree {
         fn evaluate(&self, _: usize) -> i64 {
-            println!("OH YEAH");
             match self.links[self.root] {
                 Node::Leaf(val) => val,
                 Node::Node(_, _) => panic!("shouldn't get here"),
