@@ -10,9 +10,11 @@ fn main() {
     game = game.add_piece(3);
 
     while !game.has_finished() {
-        let m = minimax(game.clone(), 2);
+        let m = minimax(game.clone(), 6);
         game = game.add_piece(m);
 
         println!("{}", game);
     }
+
+    println!("{}", game.has_won());
 }

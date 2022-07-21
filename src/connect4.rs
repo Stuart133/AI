@@ -87,9 +87,9 @@ impl<'a> Index<(usize, usize)> for Game {
 }
 
 impl MinimaxGame<MoveIterator> for Game {
-    fn evaluate(&self, _: usize) -> i64 {
+    fn evaluate(&self, depth: usize) -> i64 {
         if self.has_won() {
-            return -1000;
+            return -1000 * depth as i64;    // Prefer earlier victories
         }
 
         let mut score = (self.current_longest * 10) as i64;
@@ -311,8 +311,6 @@ mod tests {
         .add_piece(1)
         .add_piece(4)
         .add_piece(0);
-
-        println!("{}", game);
 
         assert_eq!(game.current_longest, 3);
         assert_eq!(game.opponent_longest, 2);
