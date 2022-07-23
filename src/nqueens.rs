@@ -1,22 +1,22 @@
 use std::fmt::Display;
 
 pub fn solve<const N: usize>() -> Vec<Queens<N>> {
-  let queen = Queens::<N>::new();
-  solve_internal(N - 1, queen)
+    let queen = Queens::<N>::new();
+    solve_internal(N - 1, queen)
 }
 
 fn solve_internal<const N: usize>(row: usize, root: Queens<N>) -> Vec<Queens<N>> {
-  let mut solutions = vec![];
+    let mut solutions = vec![];
 
-  if row == 0 {
-    return root.get_safe_moves(row);
-  }
+    if row == 0 {
+        return root.get_safe_moves(row);
+    }
 
-  for next in root.get_safe_moves(row) {
-    solutions.append(&mut solve_internal(row - 1, next));
-  }
+    for next in root.get_safe_moves(row) {
+        solutions.append(&mut solve_internal(row - 1, next));
+    }
 
-  solutions
+    solutions
 }
 
 #[derive(Clone)]
@@ -32,15 +32,15 @@ impl<const N: usize> Queens<N> {
     }
 
     fn get_safe_moves(&self, y: usize) -> Vec<Queens<N>> {
-      let mut queens = vec![];
+        let mut queens = vec![];
 
-      for x in 0..N {
-        if self.safe_place(x, y) {
-          queens.push(self.place_queen(x, y).expect("oops"));
+        for x in 0..N {
+            if self.safe_place(x, y) {
+                queens.push(self.place_queen(x, y).expect("oops"));
+            }
         }
-      }
 
-      queens
+        queens
     }
 
     fn safe_place(&self, x: usize, y: usize) -> bool {
