@@ -5,18 +5,13 @@ use std::{
 
 #[derive(Debug, Clone)]
 pub struct Variable<T: Eq + Hash + Clone> {
-    name: String,
     value: Option<T>,
     domain: HashSet<T>,
 }
 
 impl<T: Eq + Hash + Clone> Variable<T> {
-    pub fn new(name: String, domain: HashSet<T>, value: Option<T>) -> Self {
-        Variable {
-            name,
-            value,
-            domain,
-        }
+    pub fn new(domain: HashSet<T>, value: Option<T>) -> Self {
+        Variable { value, domain }
     }
 
     pub fn assign(&mut self, value: &T) {
@@ -80,7 +75,6 @@ impl<T: Eq + Hash + Clone> ConstraintSolver<T> {
             }
         }
 
-        // Maybe a result here>
         vec![]
     }
 

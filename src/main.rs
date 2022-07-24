@@ -6,6 +6,7 @@ pub mod csp;
 pub mod game;
 pub mod graph;
 pub mod nqueens;
+pub mod soduku;
 
 fn main() {
     let solutions = solve::<14>();
