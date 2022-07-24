@@ -1,6 +1,6 @@
-use std::collections::{HashSet, HashMap};
+use std::collections::{HashMap, HashSet};
 
-use crate::csp::{Variable, BinaryConstraint};
+use crate::csp::{BinaryConstraint, ConstraintSolver, Variable};
 
 pub fn solve_soduku() {
     #[rustfmt::skip]
@@ -20,34 +20,64 @@ pub fn solve_soduku() {
     for (j, row) in grid.iter().enumerate() {
         for (i, item) in row.iter().enumerate() {
             match item {
-                Some(value) => variables.push(Variable::new(format!("{} {}", i, j), HashSet::new(), Some(*value))),
+                Some(value) => variables.push(Variable::new(
+                    format!("{} {}", i, j),
+                    HashSet::new(),
+                    Some(*value),
+                )),
                 None => variables.push(Variable::new(format!("{} {}", i, j), domain.clone(), None)),
             }
         }
     }
 
-    let mut constraints = HashMap::<(usize, usize), BinaryConstraint<i32>>::new();
+    let mut constraints = HashMap::<usize, Vec<BinaryConstraint<i32>>>::new();
     for (j1, row) in grid.iter().enumerate() {
-      for (i1, item1) in row.iter().enumerate() {
-        for (j2, row) in grid.iter().enumerate() {
-          for (i2, item2) in row.iter().enumerate() {
-            if item1 != item2 && (i1 == i2 || j1 == j2 || get_box(i1, j1) == get_box(i1, j2)) {
-              constraints.insert((get_index(i1, j1), get_index(i2, j2)), BinaryConstraint::new(check));
+        for (i1, _) in row.iter().enumerate() {
+            for (j2, row) in grid.iter().enumerate() {
+                for (i2, _) in row.iter().enumerate() {
+                    if !(i1 == i2 && j1 == j2)
+                        && (i1 == i2 || j1 == j2 || (get_box(i1, j1) == get_box(i2, j2)))
+                    {
+                        let current = constraints.get_mut(&get_index(i1, j1));
+                        match current {
+                            Some(c) => c.push(BinaryConstraint::new(
+                                get_index(i1, j1),
+                                get_index(i2, j2),
+                                check,
+                            )),
+                            None => {
+                                constraints.insert(
+                                    get_index(i1, j1),
+                                    vec![BinaryConstraint::new(
+                                        get_index(i1, j1),
+                                        get_index(i2, j2),
+                                        check,
+                                    )],
+                                );
+                            }
+                        };
+                    }
+                }
             }
-          }
         }
-      }
+    }
+
+    let csp = ConstraintSolver::new(variables, constraints);
+    let solution = csp.solve();
+
+    for var in solution {
+        println!("{:?}", var.value);
     }
 }
 
 fn get_index(x: usize, y: usize) -> usize {
-  x + (y * 9)
+    x + (y * 9)
 }
 
 fn get_box(x: usize, y: usize) -> usize {
-  x + (y * 3)
+    x / 3 + (y / 3) * 3
 }
 
 fn check(left: &i32, right: &i32) -> bool {
-  left != right
+    left != right
 }

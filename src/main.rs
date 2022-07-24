@@ -1,4 +1,4 @@
-use crate::nqueens::solve;
+use soduku::solve_soduku;
 
 pub mod algrebra;
 pub mod connect4;
@@ -9,7 +9,5 @@ pub mod nqueens;
 pub mod soduku;
 
 fn main() {
-    let solutions = solve::<14>();
-
-    println!("{}", solutions.len());
+    solve_soduku();
 }

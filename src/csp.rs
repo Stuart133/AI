@@ -5,14 +5,18 @@ use std::{
 
 #[derive(Debug, Clone)]
 pub struct Variable<T: Eq + Hash + Clone> {
-    name: String,
-    value: Option<T>,
+    pub name: String,
+    pub value: Option<T>,
     domain: HashSet<T>,
 }
 
 impl<T: Eq + Hash + Clone> Variable<T> {
     pub fn new(name: String, domain: HashSet<T>, value: Option<T>) -> Self {
-        Variable { name, value, domain }
+        Variable {
+            name,
+            value,
+            domain,
+        }
     }
 
     pub fn assign(&mut self, value: &T) {
@@ -27,12 +31,14 @@ impl<T: Eq + Hash + Clone> Variable<T> {
 
 #[derive(Clone)]
 pub struct BinaryConstraint<T> {
+    left: usize,
+    right: usize,
     check: fn(&T, &T) -> bool,
 }
 
 impl<T> BinaryConstraint<T> {
-    pub fn new(check: fn(&T, &T) -> bool) -> Self {
-        BinaryConstraint { check }
+    pub fn new(left: usize, right: usize, check: fn(&T, &T) -> bool) -> Self {
+        BinaryConstraint { left, right, check }
     }
 }
 
@@ -40,13 +46,13 @@ impl<T> BinaryConstraint<T> {
 #[derive(Clone)]
 pub struct ConstraintSolver<T: Eq + Hash + Clone> {
     variables: Vec<Variable<T>>,
-    constraints: HashMap<(usize, usize), BinaryConstraint<T>>,
+    constraints: HashMap<usize, Vec<BinaryConstraint<T>>>,
 }
 
 impl<T: Eq + Hash + Clone> ConstraintSolver<T> {
     pub fn new(
         variables: Vec<Variable<T>>,
-        constraints: HashMap<(usize, usize), BinaryConstraint<T>>,
+        constraints: HashMap<usize, Vec<BinaryConstraint<T>>>,
     ) -> Self {
         ConstraintSolver {
             variables,
@@ -61,7 +67,7 @@ impl<T: Eq + Hash + Clone> ConstraintSolver<T> {
                 new_csp.variables[i].assign(value);
 
                 // Check constraints
-                if !self.check_constrains() {
+                if !new_csp.check_constrains(i) {
                     continue;
                 }
 
@@ -71,7 +77,7 @@ impl<T: Eq + Hash + Clone> ConstraintSolver<T> {
                     finished = finished && variable.is_assigned();
                 }
                 if finished {
-                    return self.variables;
+                    return new_csp.variables;
                 }
 
                 // Continue DFS
@@ -85,19 +91,19 @@ impl<T: Eq + Hash + Clone> ConstraintSolver<T> {
         vec![]
     }
 
-    fn check_constrains(&self) -> bool {
+    fn check_constrains(&self, last_set: usize) -> bool {
         let mut valid = true;
 
-        for (variables, constraint) in self.constraints.iter() {
-            if self.variables[variables.0].is_assigned()
-                && self.variables[variables.1].is_assigned()
-            {
-                valid = valid
-                    && (constraint.check)(
-                        self.variables[variables.0].value.as_ref().unwrap(),
-                        self.variables[variables.1].value.as_ref().unwrap(),
-                    );
+        for constraint in self.constraints.get(&last_set).unwrap() {
+            if self.variables[constraint.right].value == None {
+                continue;
             }
+
+            valid = valid
+                && (constraint.check)(
+                    self.variables[constraint.left].value.as_ref().unwrap(),
+                    self.variables[constraint.right].value.as_ref().unwrap(),
+                );
         }
 
         valid
