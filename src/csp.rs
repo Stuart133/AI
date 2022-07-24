@@ -5,13 +5,14 @@ use std::{
 
 #[derive(Debug, Clone)]
 pub struct Variable<T: Eq + Hash + Clone> {
+    name: String,
     value: Option<T>,
     domain: HashSet<T>,
 }
 
 impl<T: Eq + Hash + Clone> Variable<T> {
-    pub fn new(domain: HashSet<T>, value: Option<T>) -> Self {
-        Variable { value, domain }
+    pub fn new(name: String, domain: HashSet<T>, value: Option<T>) -> Self {
+        Variable { name, value, domain }
     }
 
     pub fn assign(&mut self, value: &T) {
@@ -27,6 +28,12 @@ impl<T: Eq + Hash + Clone> Variable<T> {
 #[derive(Clone)]
 pub struct BinaryConstraint<T> {
     check: fn(&T, &T) -> bool,
+}
+
+impl<T> BinaryConstraint<T> {
+    pub fn new(check: fn(&T, &T) -> bool) -> Self {
+        BinaryConstraint { check }
+    }
 }
 
 /// A generic constraint solver, with variables of type T
