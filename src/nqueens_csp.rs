@@ -1,10 +1,8 @@
-use std::collections::{HashMap, HashSet};
+use std::{collections::{HashMap, HashSet}, env::var};
 
 use crate::csp::{BinaryConstraint, Variable, ConstraintSolver};
 
 pub fn solve_queens() {
-    let board: [[Option<bool>; 4]; 4] = [[None; 4]; 4];
-
     let mut variables = vec![];
     let domain: HashSet<bool> = vec![true, false].into_iter().collect();
 
@@ -31,7 +29,7 @@ pub fn solve_queens() {
     }
 
     let csp = ConstraintSolver::new(variables, constraints);
-    let solution = csp.solve();
+    let solution = csp.solve(finished);
 
     for var in solution {
       println!("{:?}", var.value);
@@ -58,5 +56,21 @@ fn get_xy(index: usize) -> (usize, usize) {
 }
 
 fn check(left: &bool, right: &bool) -> bool {
-    left != right
+    !(*left && *right)
+}
+
+// Check that all variables are assigned and there are exactly n queens
+fn finished(variables: &Vec<Variable<bool>>) -> bool {
+  let mut queens = 0;
+
+  for variable in variables {
+    match variable.value {
+        Some(q) => if q {
+          queens += 1;
+        },
+        None => return false,
+    }
+  }
+
+  queens == 4
 }

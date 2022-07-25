@@ -1,6 +1,6 @@
 use std::{
     collections::{HashMap, HashSet},
-    hash::Hash,
+    hash::Hash, thread::sleep, time::Duration,
 };
 
 #[derive(Debug, Clone)]
@@ -60,10 +60,10 @@ impl<T: Eq + Hash + Clone> ConstraintSolver<T> {
         }
     }
 
-    pub fn solve(self) -> Vec<Variable<T>> {
+    pub fn solve(self, finished: fn(&Vec<Variable<T>>) -> bool) -> Vec<Variable<T>> {
         for (i, variable) in self.variables.iter().enumerate() {
-            println!("{}", i);
             for value in variable.domain.iter() {
+                // sleep(Duration::from_millis(1000));
                 let mut new_csp = self.clone();
                 new_csp.variables[i].assign(value);
 
@@ -73,16 +73,12 @@ impl<T: Eq + Hash + Clone> ConstraintSolver<T> {
                 }
 
                 // Check if we're finished
-                let mut finished = true;
-                for variable in new_csp.variables.iter() {
-                    finished = finished && variable.is_assigned();
-                }
-                if finished {
+                if finished(&new_csp.variables) {
                     return new_csp.variables;
                 }
 
                 // Continue DFS
-                let solved = new_csp.solve();
+                let solved = new_csp.solve(finished);
                 if solved.len() != 0 {
                     return solved;
                 }

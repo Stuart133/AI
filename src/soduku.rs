@@ -63,7 +63,7 @@ pub fn solve_soduku() {
     }
 
     let csp = ConstraintSolver::new(variables, constraints);
-    let solution = csp.solve();
+    let solution = csp.solve(finished);
 
     for var in solution {
         println!("{:?}", var.value);
@@ -80,4 +80,15 @@ fn get_box(x: usize, y: usize) -> usize {
 
 fn check(left: &i32, right: &i32) -> bool {
     left != right
+}
+
+fn finished(variables: &Vec<Variable<i32>>) -> bool {
+    for variable in variables {
+        match variable.value {
+            Some(_) => {},
+            None => return false,
+        }
+    }
+
+    true
 }
