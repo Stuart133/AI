@@ -62,6 +62,7 @@ impl<T: Eq + Hash + Clone> ConstraintSolver<T> {
 
     pub fn solve(self) -> Vec<Variable<T>> {
         for (i, variable) in self.variables.iter().enumerate() {
+            println!("{}", i);
             for value in variable.domain.iter() {
                 let mut new_csp = self.clone();
                 new_csp.variables[i].assign(value);
