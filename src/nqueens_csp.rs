@@ -80,12 +80,32 @@ fn finished(variables: &Vec<Variable<bool>>) -> bool {
 fn global_constraint(variables: &Vec<Variable<bool>>) -> bool {
     let mut queens = 0;
     let mut empty = 0;
+    let mut row_queen = [0, 0, 0, 0];
+    let mut col_queen = [0, 0, 0, 0];
+    let mut row_empty = [0, 0, 0, 0];
+    let mut col_empty = [0, 0, 0, 0];
 
-    for variable in variables {
+    for (i, variable) in variables.iter().enumerate() {
         match variable.value {
-            Some(true) => queens += 1,
+            Some(true) => {
+                queens += 1;
+                let (x, y) = get_xy(i);
+                row_queen[x] += 1;
+                col_queen[y] += 1;
+            }
+            Some(false) => {
+                let (x, y) = get_xy(i);
+                row_empty[x] += 1;
+                col_empty[y] += 1;
+            }
             None => empty += 1,
             _ => {}
+        }
+    }
+
+    for i in 0..4 {
+        if row_queen[i] > 1 || col_queen[i] > 1 || row_empty[i] > 3 || col_empty[i] > 3 {
+            return false;
         }
     }
 
