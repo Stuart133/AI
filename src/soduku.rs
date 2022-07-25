@@ -62,7 +62,7 @@ pub fn solve_soduku() {
         }
     }
 
-    let csp = ConstraintSolver::new(variables, constraints);
+    let csp = ConstraintSolver::new(variables, constraints, None);
     let solution = csp.solve(finished);
 
     for var in solution {

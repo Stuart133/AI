@@ -45,29 +45,43 @@ impl<T> BinaryConstraint<T> {
     }
 }
 
+#[derive(Clone)]
+pub struct GlobalConstraint<T: Eq + Hash + Clone + Debug> {
+    check: fn(&Vec<Variable<T>>) -> bool,
+}
+
+impl<T: Eq + Hash + Clone + Debug> GlobalConstraint<T> {
+    pub fn new(check: fn(&Vec<Variable<T>>) -> bool) -> Self {
+        GlobalConstraint { check }
+    }
+}
+
 /// A generic constraint solver, with variables of type T
 #[derive(Clone)]
 pub struct ConstraintSolver<T: Eq + Hash + Clone + Debug> {
     variables: Vec<Variable<T>>,
     constraints: HashMap<usize, Vec<BinaryConstraint<T>>>,
+    global_constraint: Option<GlobalConstraint<T>>,
 }
 
 impl<T: Eq + Hash + Clone + Debug> ConstraintSolver<T> {
     pub fn new(
         variables: Vec<Variable<T>>,
         constraints: HashMap<usize, Vec<BinaryConstraint<T>>>,
+        global_constraint: Option<GlobalConstraint<T>>,
     ) -> Self {
         ConstraintSolver {
             variables,
             constraints,
+            global_constraint,
         }
     }
 
     pub fn solve(self, finished: fn(&Vec<Variable<T>>) -> bool) -> Vec<Variable<T>> {
         for (i, variable) in self.variables.iter().enumerate() {
             for value in variable.domain.iter() {
-                sleep(Duration::from_millis(500));
-                println!("{} {:?}", i, value);
+                // sleep(Duration::from_millis(500));
+                // println!("{} {:?}", i, value);
                 let mut new_csp = self.clone();
                 new_csp.variables[i].assign(value);
 
@@ -93,6 +107,14 @@ impl<T: Eq + Hash + Clone + Debug> ConstraintSolver<T> {
     }
 
     fn check_constrains(&mut self, last_set: usize) -> bool {
+        // Check the global constraint
+        if let Some(constraint) = &self.global_constraint {
+            if !(constraint.check)(&self.variables) {
+                // println!("No global");
+                return false;
+            }
+        }
+
         for constraint in self.constraints.get(&last_set).unwrap() {
             // Propagate constraints to neighbours
             if self.variables[constraint.right].value == None {
@@ -103,12 +125,12 @@ impl<T: Eq + Hash + Clone + Debug> ConstraintSolver<T> {
                         self.variables[constraint.left].value.as_ref().unwrap(),
                         value,
                     )) {
-                        println!("{:?} {}", value, constraint.right);
+                        // println!("{:?} {}", value, constraint.right);
                         self.variables[constraint.right].domain.remove(value);
 
                         // If we've emptied a neighbouring domain, this is a failed assignment
                         if self.variables[constraint.right].domain.len() == 0 {
-                            println!("Empty domain");
+                            // println!("Empty domain");
                             return false;
                         }
                     }

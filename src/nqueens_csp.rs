@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-use crate::csp::{BinaryConstraint, ConstraintSolver, Variable};
+use crate::csp::{BinaryConstraint, ConstraintSolver, GlobalConstraint, Variable};
 
 pub fn solve_queens() {
     let mut variables = vec![];
@@ -32,7 +32,11 @@ pub fn solve_queens() {
         }
     }
 
-    let csp = ConstraintSolver::new(variables, constraints);
+    let csp = ConstraintSolver::new(
+        variables,
+        constraints,
+        Some(GlobalConstraint::new(global_constraint)),
+    );
     let solution = csp.solve(finished);
 
     for var in solution {
@@ -71,4 +75,19 @@ fn finished(variables: &Vec<Variable<bool>>) -> bool {
     }
 
     queens == 4
+}
+
+fn global_constraint(variables: &Vec<Variable<bool>>) -> bool {
+    let mut queens = 0;
+    let mut empty = 0;
+
+    for variable in variables {
+        match variable.value {
+            Some(true) => queens += 1,
+            None => empty += 1,
+            _ => {}
+        }
+    }
+
+    queens <= 4 && queens + empty >= 4
 }
