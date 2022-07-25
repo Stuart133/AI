@@ -85,7 +85,7 @@ fn check(left: &i32, right: &i32) -> bool {
 fn finished(variables: &Vec<Variable<i32>>) -> bool {
     for variable in variables {
         match variable.value {
-            Some(_) => {},
+            Some(_) => {}
             None => return false,
         }
     }

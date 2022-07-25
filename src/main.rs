@@ -1,4 +1,5 @@
 use nqueens_csp::solve_queens;
+use soduku::solve_soduku;
 
 pub mod algrebra;
 pub mod connect4;
@@ -10,5 +11,6 @@ pub mod nqueens_csp;
 pub mod soduku;
 
 fn main() {
+    // solve_soduku();
     solve_queens();
 }
