@@ -26,7 +26,7 @@ impl Party {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Vote {
     Yea,
     Nay,
@@ -44,6 +44,16 @@ impl Vote {
 
     fn new_votes(votes: &str) -> Vec<Self> {
         votes.chars().map(|c| Self::new(c)).collect()
+    }
+}
+
+impl Into<f64> for Vote {
+    fn into(self) -> f64 {
+        match self {
+            Vote::Yea => 1.0,
+            Vote::Nay => -1.0,
+            Vote::Absent => 0.0,
+        }
     }
 }
 
@@ -112,6 +122,19 @@ pub fn hamming_distance(left: &Legislator, right: &Legislator) -> i64 {
     }
 
     distance
+}
+
+pub fn euclidean_distance(left: &Legislator, right: &Legislator) -> i64 {
+    let mut total = 0.0;
+
+    for i in 0..left.votes.len() {
+        let l: f64 = left.votes[i].into();
+        let r: f64 = right.votes[i].into();
+
+        total += (l - r).powi(2);
+    }
+
+    total.sqrt() as i64
 }
 
 pub struct NearestNeighboursClassifier<'a> {
@@ -185,5 +208,28 @@ impl<'a> NearestNeighboursClassifier<'a> {
         }
 
         return best_party;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{euclidean_distance, Legislator, Party, Vote};
+
+    #[test]
+    pub fn euclidean() {
+        let l1 = Legislator {
+            name: "".to_string(),
+            party: Party::Democrat,
+            votes: vec![Vote::Yea, Vote::Yea],
+        };
+        let l2 = Legislator {
+            name: "".to_string(),
+            party: Party::Democrat,
+            votes: vec![Vote::Yea, Vote::Nay],
+        };
+
+        let distance = euclidean_distance(&l1, &l2);
+
+        assert_eq!(2, distance);
     }
 }

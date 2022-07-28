@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use senate::{crosscheck, evaluate, hamming_distance};
+use senate::{crosscheck, euclidean_distance, evaluate};
 
 pub mod algrebra;
 pub mod connect4;
@@ -16,5 +16,5 @@ fn main() {
     let data = senate::parse(Path::new("data/S110.ord"));
 
     let (g1, g2) = crosscheck(data);
-    println!("{}", evaluate(hamming_distance, 1, &g1, &g2));
+    println!("{}", evaluate(euclidean_distance, 1, &g1, &g2));
 }
