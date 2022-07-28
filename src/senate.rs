@@ -18,7 +18,6 @@ pub enum Party {
 
 impl Party {
     fn new(code: &str) -> Self {
-        println!("{}", code);
         match code {
             "100" => Party::Democrat,
             "200" => Party::Republican,
@@ -63,10 +62,62 @@ pub fn parse(data_file: &Path) -> Vec<Legislator> {
         .collect()
 }
 
-pub struct NearestNeighboursClassifier {
+pub fn evaluate(
     distance: fn(&Legislator, &Legislator) -> i64,
     k: usize,
-    data: Vec<Legislator>,
+    group1: &Vec<Legislator>,
+    group2: &Vec<Legislator>,
+) -> usize {
+    let mut score = 0;
+
+    for (test, train) in vec![(group1, group2), (group2, group1)] {
+        let classifier = NearestNeighboursClassifier::new(distance, k, train);
+        for leg in test {
+            let actual = leg.party;
+            let predicted = classifier.classify(leg);
+            if actual == predicted {
+                score += 1;
+                println!("{}: {:?} CORRECT", leg.name, predicted);
+            } else {
+                println!("{}: {:?} WRONG. ACTUAL {:?}", leg.name, predicted, actual);
+            }
+        }
+    }
+
+    score
+}
+
+pub fn crosscheck(group: Vec<Legislator>) -> (Vec<Legislator>, Vec<Legislator>) {
+    let mut g1 = vec![];
+    let mut g2 = vec![];
+
+    for (i, leg) in group.into_iter().enumerate() {
+        if i % 2 == 0 {
+            g1.push(leg);
+        } else {
+            g2.push(leg);
+        }
+    }
+
+    (g1, g2)
+}
+
+pub fn hamming_distance(left: &Legislator, right: &Legislator) -> i64 {
+    let mut distance = 0;
+
+    for i in 0..left.votes.len() {
+        if left.votes[i] == right.votes[i] {
+            distance += 1;
+        }
+    }
+
+    distance
+}
+
+pub struct NearestNeighboursClassifier<'a> {
+    distance: fn(&Legislator, &Legislator) -> i64,
+    k: usize,
+    data: &'a Vec<Legislator>,
 }
 
 #[derive(PartialEq, Eq, Hash)]
@@ -88,11 +139,11 @@ impl<'a> PartialOrd for Distance<'a> {
     }
 }
 
-impl NearestNeighboursClassifier {
+impl<'a> NearestNeighboursClassifier<'a> {
     pub fn new(
         distance: fn(&Legislator, &Legislator) -> i64,
         k: usize,
-        training_data: Vec<Legislator>,
+        training_data: &'a Vec<Legislator>,
     ) -> Self {
         NearestNeighboursClassifier {
             distance,
