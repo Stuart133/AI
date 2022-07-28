@@ -92,7 +92,7 @@ pub fn crosscheck(group: Vec<Legislator>) -> (Vec<Legislator>, Vec<Legislator>) 
     let mut g2 = vec![];
 
     for (i, leg) in group.into_iter().enumerate() {
-        if i % 2 == 0 {
+        if i % 4 == 0 || i % 4 == 3 {
             g1.push(leg);
         } else {
             g2.push(leg);
@@ -106,7 +106,7 @@ pub fn hamming_distance(left: &Legislator, right: &Legislator) -> i64 {
     let mut distance = 0;
 
     for i in 0..left.votes.len() {
-        if left.votes[i] == right.votes[i] {
+        if left.votes[i] != right.votes[i] {
             distance += 1;
         }
     }
