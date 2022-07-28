@@ -1,11 +1,13 @@
 use std::path::Path;
 
+#[derive(Debug)]
 pub struct Legislator {
     name: String,
     party: Party,
     votes: Vec<Vote>,
 }
 
+#[derive(Debug)]
 pub enum Party {
     Democrat,
     Republican,
@@ -13,13 +15,16 @@ pub enum Party {
 
 impl Party {
     fn new(code: &str) -> Self {
+        println!("{}", code);
         match code {
             "100" => Party::Democrat,
             "200" => Party::Republican,
+            _ => Party::Democrat,
         }
     }
 }
 
+#[derive(Debug)]
 pub enum Vote {
     Yea,
     Nay,
@@ -49,7 +54,7 @@ pub fn parse(data_file: &Path) -> Vec<Legislator> {
     data.lines()
         .map(|line| Legislator {
             name: line[25..36].to_string(),
-            party: Party::new(&line[19..23]),
+            party: Party::new(&line[20..23]),
             votes: Vote::new_votes(&line[36..]),
         })
         .collect()
