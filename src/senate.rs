@@ -14,6 +14,7 @@ pub struct Legislator {
 pub enum Party {
     Democrat,
     Republican,
+    Independent,
 }
 
 impl Party {
@@ -21,7 +22,7 @@ impl Party {
         match code {
             "100" => Party::Democrat,
             "200" => Party::Republican,
-            _ => Party::Democrat,
+            _ => Party::Independent,
         }
     }
 }

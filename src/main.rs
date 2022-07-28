@@ -16,5 +16,5 @@ fn main() {
     let data = senate::parse(Path::new("data/S110.ord"));
 
     let (g1, g2) = crosscheck(data);
-    println!("{}", evaluate(euclidean_distance, 1, &g1, &g2));
+    println!("{}", evaluate(euclidean_distance, 3, &g1, &g2));
 }
