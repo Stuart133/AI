@@ -2,8 +2,6 @@ use std::{
     collections::{HashMap, HashSet},
     fmt::Debug,
     hash::Hash,
-    thread::sleep,
-    time::Duration,
 };
 
 #[derive(Debug, Clone)]
@@ -80,8 +78,6 @@ impl<T: Eq + Hash + Clone + Debug> ConstraintSolver<T> {
     pub fn solve(self, finished: fn(&Vec<Variable<T>>) -> bool) -> Vec<Variable<T>> {
         for (i, variable) in self.variables.iter().enumerate() {
             for value in variable.domain.iter() {
-                // sleep(Duration::from_millis(500));
-                // println!("{} {:?}", i, value);
                 let mut new_csp = self.clone();
                 new_csp.variables[i].assign(value);
 
@@ -110,7 +106,6 @@ impl<T: Eq + Hash + Clone + Debug> ConstraintSolver<T> {
         // Check the global constraint
         if let Some(constraint) = &self.global_constraint {
             if !(constraint.check)(&self.variables) {
-                // println!("No global");
                 return false;
             }
         }
@@ -125,12 +120,10 @@ impl<T: Eq + Hash + Clone + Debug> ConstraintSolver<T> {
                         self.variables[constraint.left].value.as_ref().unwrap(),
                         value,
                     )) {
-                        // println!("{:?} {}", value, constraint.right);
                         self.variables[constraint.right].domain.remove(value);
 
                         // If we've emptied a neighbouring domain, this is a failed assignment
                         if self.variables[constraint.right].domain.len() == 0 {
-                            // println!("Empty domain");
                             return false;
                         }
                     }
