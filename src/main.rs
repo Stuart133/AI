@@ -17,5 +17,5 @@ fn main() {
     let bills = senate::parse_bills(Path::new("data/S110desc.csv"));
 
     let tree = DisorderTree::new(data.iter().map(|l| l).collect());
-    tree.print(&bills);
+    tree.print(&bills, 0);
 }

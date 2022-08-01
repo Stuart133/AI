@@ -17,7 +17,6 @@ pub fn parse_bills(data_file: &Path) -> Vec<Bill> {
     };
 
     data.lines()
-        .skip(1)
         .map(|l| Bill {
             code: l.split(",").skip(3).take(1).collect(),
             description: l.split(",").skip(6).take(1).collect(),
@@ -100,7 +99,7 @@ pub fn parse(data_file: &Path) -> Vec<Legislator> {
         .map(|line| Legislator {
             name: line[25..36].to_string(),
             party: Party::new(&line[20..23]),
-            votes: Vote::new_votes(&line[36..]),
+            votes: Vote::new_votes(&line[37..]),
         })
         .collect()
 }
@@ -291,21 +290,24 @@ impl DisorderTree {
         }))
     }
 
-    pub fn print(&self, bills: &Vec<Bill>) {
+    pub fn print(&self, bills: &Vec<Bill>, indent: usize) {
         match self {
             DisorderTree::Leaf(v) => println!("{:?}", v),
             DisorderTree::Node(n) => {
                 println!("Disorder: {}", n.disorder);
                 println!(
-                    "{} on {}: {}",
-                    n.vote_criterion, bills[n.vote_index].code, bills[n.vote_index].description
+                    "{}{} on {}: {}",
+                    "\t".repeat(indent),
+                    n.vote_criterion,
+                    bills[n.vote_index].code,
+                    bills[n.vote_index].description
                 );
 
-                print!("+ ");
-                n.yes.print(bills);
+                print!("{}+ ", "\t".repeat(indent));
+                n.yes.print(bills, indent + 1);
 
-                print!("- ");
-                n.no.print(bills);
+                print!("{}- ", "\t".repeat(indent));
+                n.no.print(bills, indent + 1);
             }
         }
     }
