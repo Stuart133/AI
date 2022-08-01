@@ -17,4 +17,6 @@ fn main() {
 
     let (g1, g2) = crosscheck(data);
     println!("{}", evaluate(euclidean_distance, 3, &g1, &g2));
+
+    println!("{:?}", senate::parse_bills(Path::new("data/S110desc.csv")));
 }

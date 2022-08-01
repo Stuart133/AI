@@ -3,6 +3,27 @@ use std::{
     path::Path,
 };
 
+#[derive(Debug)]
+pub struct Bill {
+    code: String,
+    description: String,
+}
+
+pub fn parse_bills(data_file: &Path) -> Vec<Bill> {
+    let data = match std::fs::read_to_string(data_file) {
+        Ok(str) => str,
+        Err(_) => return vec![],
+    };
+
+    data.lines()
+        .skip(1)
+        .map(|l| Bill {
+            code: l.split(",").skip(3).take(1).collect(),
+            description: l.split(",").skip(6).take(1).collect(),
+        })
+        .collect()
+}
+
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub struct Legislator {
     name: String,
@@ -210,6 +231,12 @@ impl<'a> NearestNeighboursClassifier<'a> {
 
         return best_party;
     }
+}
+
+pub struct DisorderTree<'a> {
+    yes: &'a DisorderTree<'a>,
+    no: &'a DisorderTree<'a>,
+    vote_index: usize,
 }
 
 #[cfg(test)]
