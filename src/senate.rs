@@ -247,11 +247,12 @@ impl<'a> NearestNeighboursClassifier<'a> {
 pub struct DisorderNode {
     yes: Box<DisorderTree>,
     no: Box<DisorderTree>,
+    disorder: i64,
     vote_index: usize,
     vote_criterion: Vote,
 }
 
-enum DisorderTree {
+pub enum DisorderTree {
     Node(DisorderNode),
     Leaf(Party),
 }
@@ -284,15 +285,28 @@ impl DisorderTree {
         Box::new(DisorderTree::Node(DisorderNode {
             yes: DisorderTree::new(yes),
             no: DisorderTree::new(no),
+            disorder: best_disorder,
             vote_index: best_criterion.0,
             vote_criterion: best_criterion.1,
         }))
     }
 
-    pub fn print(&self, bills: Vec<Bill>) {
+    pub fn print(&self, bills: &Vec<Bill>) {
         match self {
             DisorderTree::Leaf(v) => println!("{:?}", v),
-            DisorderTree::Node(n) => {}
+            DisorderTree::Node(n) => {
+                println!("Disorder: {}", n.disorder);
+                println!(
+                    "{} on {}: {}",
+                    n.vote_criterion, bills[n.vote_index].code, bills[n.vote_index].description
+                );
+
+                print!("+ ");
+                n.yes.print(bills);
+
+                print!("- ");
+                n.no.print(bills);
+            }
         }
     }
 }

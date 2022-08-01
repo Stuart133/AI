@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use senate::{crosscheck, euclidean_distance, evaluate};
+use senate::DisorderTree;
 
 pub mod algrebra;
 pub mod connect4;
@@ -14,9 +14,8 @@ pub mod soduku;
 
 fn main() {
     let data = senate::parse(Path::new("data/S110.ord"));
+    let bills = senate::parse_bills(Path::new("data/S110desc.csv"));
 
-    let (g1, g2) = crosscheck(data);
-    println!("{}", evaluate(euclidean_distance, 3, &g1, &g2));
-
-    println!("{:?}", senate::parse_bills(Path::new("data/S110desc.csv")));
+    let tree = DisorderTree::new(data.iter().map(|l| l).collect());
+    tree.print(&bills);
 }
