@@ -1,5 +1,6 @@
 use std::{
     collections::{BinaryHeap, HashMap},
+    fmt::Display,
     path::Path,
 };
 
@@ -75,6 +76,16 @@ impl Into<f64> for Vote {
             Vote::Yea => 1.0,
             Vote::Nay => -1.0,
             Vote::Absent => 0.0,
+        }
+    }
+}
+
+impl Display for Vote {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Vote::Yea => write!(f, "Yes"),
+            Vote::Nay => write!(f, "No"),
+            Vote::Absent => write!(f, "Absent/Abstain"),
         }
     }
 }
@@ -233,10 +244,98 @@ impl<'a> NearestNeighboursClassifier<'a> {
     }
 }
 
-pub struct DisorderTree<'a> {
-    yes: &'a DisorderTree<'a>,
-    no: &'a DisorderTree<'a>,
+pub struct DisorderNode {
+    yes: Box<DisorderTree>,
+    no: Box<DisorderTree>,
     vote_index: usize,
+    vote_criterion: Vote,
+}
+
+enum DisorderTree {
+    Node(DisorderNode),
+    Leaf(Party),
+}
+
+impl DisorderTree {
+    pub fn new(legislators: Vec<&Legislator>) -> Box<Self> {
+        match homogeneous(&legislators) {
+            Some(v) => return Box::new(DisorderTree::Leaf(v.party)),
+            None => {}
+        };
+
+        let mut best_disorder = i64::max_value();
+        let mut best_criterion = (0, Vote::Yea);
+        for vote in 0..legislators[0].votes.len() {
+            for vote_value in vec![Vote::Yea, Vote::Absent, Vote::Nay] {
+                let (yes, no) = partition(&legislators, vote, vote_value);
+                if yes.len() == 0 || no.len() == 0 {
+                    continue;
+                }
+
+                let disorder = homogeneous_disorder(yes, no);
+                if disorder < best_disorder {
+                    best_disorder = disorder;
+                    best_criterion = (vote, vote_value);
+                }
+            }
+        }
+
+        let (yes, no) = partition(&legislators, best_criterion.0, best_criterion.1);
+        Box::new(DisorderTree::Node(DisorderNode {
+            yes: DisorderTree::new(yes),
+            no: DisorderTree::new(no),
+            vote_index: best_criterion.0,
+            vote_criterion: best_criterion.1,
+        }))
+    }
+
+    pub fn print(&self, bills: Vec<Bill>) {
+        match self {
+            DisorderTree::Leaf(v) => println!("{:?}", v),
+            DisorderTree::Node(n) => {}
+        }
+    }
+}
+
+fn partition<'a>(
+    legislators: &Vec<&'a Legislator>,
+    vote: usize,
+    value: Vote,
+) -> (Vec<&'a Legislator>, Vec<&'a Legislator>) {
+    let mut matched = vec![];
+    let mut unmatched = vec![];
+
+    for legislator in legislators {
+        if legislator.votes[vote] == value {
+            matched.push(*legislator);
+        } else {
+            unmatched.push(*legislator);
+        }
+    }
+
+    (matched, unmatched)
+}
+
+fn homogeneous<'a>(data: &Vec<&'a Legislator>) -> Option<&'a Legislator> {
+    for item in data {
+        if item.party != data[0].party {
+            return None;
+        }
+    }
+
+    Some(data[0])
+}
+
+fn homogeneous_disorder(yes: Vec<&Legislator>, no: Vec<&Legislator>) -> i64 {
+    let mut result = 0;
+    if let Some(_) = homogeneous(&yes) {
+        result -= yes.len() as i64;
+    }
+    if let Some(_) = homogeneous(&no) {
+        result -= no.len() as i64;
+    }
+
+    result
 }
 
 #[cfg(test)]
